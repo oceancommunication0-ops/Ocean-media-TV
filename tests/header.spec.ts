@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/')
 })
 
-test('desktop : identité, navigation active et Hero seule dans la zone principale', async ({ page }, testInfo) => {
+test('desktop : identité, navigation active, Hero et Actualités dans la zone principale', async ({ page }, testInfo) => {
   await expect(page).toHaveTitle(/Océan Média TV/)
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
   await expect(page.locator('.signature')).toHaveText('INFORMER • FORMER • INSPIRER')
@@ -22,7 +22,7 @@ test('desktop : identité, navigation active et Hero seule dans la zone principa
   const hero = main.getByRole('region', { name: 'L’info qui ouvre les horizons.', exact: true })
   await expect(hero).toHaveAttribute('aria-labelledby', 'hero-title')
   await expect(main.getByRole('heading', { level: 1 })).toHaveText('L’info qui ouvre les horizons.')
-  await expect(main.locator(':scope > section')).toHaveCount(1)
+  await expect(main.locator(':scope > section')).toHaveCount(2)
   await expect(page.getByRole('contentinfo')).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true })
 })
@@ -30,9 +30,9 @@ test('desktop : identité, navigation active et Hero seule dans la zone principa
 test('les futures rubriques donnent un retour sans naviguer', async ({ page }) => {
   const initialUrl = page.url()
   const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
-  await navigation.getByRole('link', { name: 'Actualités', exact: true }).click()
+  await navigation.getByRole('link', { name: 'Océan TV', exact: true }).click()
 
-  await expect(page.locator('.notification-region')).toContainText('La rubrique « Actualités » sera bientôt disponible.')
+  await expect(page.locator('.notification-region')).toContainText('La rubrique « Océan TV » sera bientôt disponible.')
   await expect(page).toHaveURL(initialUrl)
   await expect(navigation.getByRole('link', { name: 'Accueil', exact: true })).toHaveAttribute('aria-current', 'page')
   await page.getByRole('button', { name: 'Fermer la notification', exact: true }).click()

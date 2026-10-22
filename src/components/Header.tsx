@@ -18,6 +18,7 @@ export function Header() {
   const [query, setQuery] = useState('')
   const [notice, setNotice] = useState('')
   const returnFocus = useRef<HTMLElement | null>(null)
+  const pendingSection = useRef<string | null>(null)
   const searchInput = useRef<HTMLInputElement>(null)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reduceMotion = useReducedMotion()
@@ -54,11 +55,27 @@ export function Header() {
     setPanel(next)
   }
 
+  const goToSection = (id: string) => {
+    requestAnimationFrame(() => {
+      const section = document.getElementById(id)
+      if (!section) return
+      if (window.location.hash !== `#${id}`) window.history.pushState(null, '', `#${id}`)
+      section.focus({ preventScroll: true })
+      section.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'instant' : 'smooth' })
+    })
+  }
+
   const navigate = (event: MouseEvent<HTMLAnchorElement>, item: NavigationItem) => {
+    if (item.available && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)) return
     // Les pages internes seront connectées au routeur à la prochaine étape.
     event.preventDefault()
     setPanel(null)
-    if (item.available) {
+    if (item.href.startsWith('#')) {
+      const id = item.href.slice(1)
+      if (panel) pendingSection.current = id
+      else goToSection(id)
+    } else if (item.available) {
+      if (window.location.hash) window.history.pushState(null, '', window.location.pathname + window.location.search)
       window.scrollTo({ top: 0, behavior: reduceMotion ? 'instant' : 'smooth' })
     } else {
       notify(`La rubrique « ${item.label} » sera bientôt disponible.`)
@@ -90,7 +107,7 @@ export function Header() {
             <ul>
               {navigation.map(item => (
                 <li key={item.href}>
-                  <a className={`navigation-link${item.available ? ' is-active' : ''}`} href={item.href} aria-current={item.available ? 'page' : undefined} onClick={event => navigate(event, item)}>{item.label}</a>
+                  <a className={`navigation-link${item.href === '/' ? ' is-active' : ''}`} href={item.href} aria-current={item.href === '/' ? 'page' : undefined} onClick={event => navigate(event, item)}>{item.label}</a>
                 </li>
               ))}
             </ul>
@@ -115,7 +132,13 @@ export function Header() {
               <Dialog.Content
                 forceMount
                 asChild
-                onCloseAutoFocus={event => { event.preventDefault(); returnFocus.current?.focus() }}
+                onCloseAutoFocus={event => {
+                  event.preventDefault()
+                  if (pendingSection.current) {
+                    goToSection(pendingSection.current)
+                    pendingSection.current = null
+                  } else returnFocus.current?.focus()
+                }}
                 onOpenAutoFocus={event => { if (panel === 'search') { event.preventDefault(); searchInput.current?.focus() } }}
               >
                 <motion.div
@@ -133,7 +156,7 @@ export function Header() {
                       <Dialog.Title className="sr-only">Menu principal</Dialog.Title>
                       <Dialog.Description className="sr-only">Explorez les rubriques d’Océan Média TV.</Dialog.Description>
                       <nav className="mobile-navigation" aria-label="Navigation mobile"><ul>{navigation.map((item, index) => (
-                        <li key={item.href}><a href={item.href} className={`mobile-navigation-link${item.available ? ' is-active' : ''}`} aria-current={item.available ? 'page' : undefined} onClick={event => navigate(event, item)}><span className="mobile-nav-index">0{index + 1}</span><span>{item.label}</span>{item.available ? <span className="active-dot" aria-hidden="true" /> : <ArrowUpRight size={17} strokeWidth={1.5} aria-hidden="true" />}</a></li>
+                        <li key={item.href}><a href={item.href} className={`mobile-navigation-link${item.href === '/' ? ' is-active' : ''}`} aria-current={item.href === '/' ? 'page' : undefined} onClick={event => navigate(event, item)}><span className="mobile-nav-index">0{index + 1}</span><span>{item.label}</span>{item.href === '/' ? <span className="active-dot" aria-hidden="true" /> : <ArrowUpRight size={17} strokeWidth={1.5} aria-hidden="true" />}</a></li>
                       ))}</ul></nav>
                       <div className="mobile-menu-bottom">
                         <button type="button" className="mobile-contact-button" onClick={() => setPanel('contact')}>Parlons de vos projets <ArrowUpRight size={19} aria-hidden="true" /></button>
