@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/')
 })
 
-test('desktop : identité, navigation active et zone principale strictement vide', async ({ page }, testInfo) => {
+test('desktop : identité, navigation active et Hero seule dans la zone principale', async ({ page }, testInfo) => {
   await expect(page).toHaveTitle(/Océan Média TV/)
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
   await expect(page.locator('.signature')).toHaveText('INFORMER • FORMER • INSPIRER')
@@ -19,7 +19,11 @@ test('desktop : identité, navigation active et zone principale strictement vide
   const main = page.getByRole('main', { name: 'Contenu principal' })
   await expect(main).toHaveAttribute('id', 'main-content')
   await expect(main).toHaveAttribute('tabindex', '-1')
-  expect(await main.evaluate(element => element.childNodes.length)).toBe(0)
+  const hero = main.getByRole('region', { name: 'L’info qui ouvre les horizons.', exact: true })
+  await expect(hero).toHaveAttribute('aria-labelledby', 'hero-title')
+  await expect(main.getByRole('heading', { level: 1 })).toHaveText('L’info qui ouvre les horizons.')
+  await expect(main.locator(':scope > section')).toHaveCount(1)
+  await expect(page.getByRole('contentinfo')).toHaveCount(0)
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true })
 })
 
@@ -89,13 +93,13 @@ test('les réseaux sans profil officiel restent honnêtes et interactifs', async
 })
 
 test('le header reste collé au défilement et acquiert son ombre', async ({ page }) => {
-  // La hauteur ajoutée existe uniquement pendant ce test ; le main reste vide.
+  // La hauteur ajoutée existe uniquement pendant ce test pour garantir le défilement.
   await page.locator('main').evaluate(element => { element.style.minHeight = '220vh' })
   await page.evaluate(() => window.scrollTo(0, 450))
   await expect(page.locator('header')).toHaveClass(/is-scrolled/)
   expect(await page.locator('header').evaluate(element => Math.round(element.getBoundingClientRect().top))).toBe(0)
   await expect.poll(() => page.locator('header').evaluate(element => getComputedStyle(element).boxShadow)).not.toBe('none')
-  await expect(page.locator('main')).toBeEmpty()
+  await expect(page.getByRole('main').getByRole('region', { name: 'L’info qui ouvre les horizons.', exact: true })).toBeVisible()
 })
 
 test.describe('mobile', () => {
