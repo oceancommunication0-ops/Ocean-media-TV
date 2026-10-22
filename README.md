@@ -17,7 +17,7 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 - `src/components/` : Header, navigation et interactions associées.
 - `src/components/Hero.tsx` et `hero.css` : composition éditoriale, sélection des regards et fenêtres de lecture.
 - `src/lib/hero-content.ts` : trois regards éditoriaux, textes et références des images.
-- `src/components/NewsSection.tsx` et `news.css` : sélection d’articles, filtres thématiques, chargement supplémentaire et lecteur accessible.
+- `src/components/NewsSection.tsx` et `news.css` : sélection d’articles, filtres thématiques et liens préparés pour les futures pages éditoriales.
 - `src/lib/news-content.ts` : exemples d’articles, catégories et métadonnées à remplacer par les publications validées.
 - `src/lib/` : configuration commune des rubriques et des coordonnées.
 - `src/index.css` : identité visuelle, styles responsive et accessibilité.
@@ -37,11 +37,11 @@ Les textes sont fondés sur le document de présentation fourni, sans actualité
 
 ## Actualités
 
-Les six articles sont des **exemples de démonstration**, comme demandé, avec un signalement visible dans la section et dans le lecteur. Ils ne relatent pas d’événements réels et ne portent aucune date de publication fictive. Quatre exemples sont affichés initialement ; « Afficher plus d’articles » révèle les deux suivants. Les filtres fonctionnent sans rechargement et annoncent le nombre de résultats aux lecteurs d’écran.
+Les six contenus éditoriaux générés représentent le rendu final attendu : rubrique, format, auteur, date, temps de lecture, extrait et photographie. Quatre publications sont affichées sur l’accueil ; les filtres présentent les contenus associés sans rechargement.
 
-L’entrée Actualités du Header et de la recherche mène désormais à `#actualites`, avec fermeture du menu et déplacement du focus. Le lecteur d’article prend en charge Échap, le focus clavier et le verrouillage du défilement.
+L’entrée Actualités du Header et de la recherche mène à `#actualites`, avec fermeture du menu, déplacement du focus et état actif lié à la section visible. Les cartes pointent vers leurs futures URL `/actualites/<article>` et le bouton final vers `/actualites`. Tant que ces pages ne sont pas développées, une notification discrète évite de charger une route inexistante. Aucun lecteur en fenêtre n’est utilisé.
 
-Pour intégrer de vraies publications, remplacer les entrées de `newsArticles` dans `src/lib/news-content.ts`, renseigner la date réelle `publishedAt` au format ISO, passer `isDemo` à `false` et remplacer les visuels illustratifs par les photographies autorisées. Les textes et métadonnées restent indépendants de la présentation. Les originaux des nouveaux visuels et leurs indications de provenance sont dans `design-assets/news/` ; `node scripts/optimize-news-images.mjs` recrée leurs variantes WebP.
+Pour intégrer les publications validées, remplacer les entrées de `newsArticles` dans `src/lib/news-content.ts`, renseigner `publishedAt` au format ISO et remplacer les visuels par les photographies autorisées. Les textes et métadonnées restent indépendants de la présentation. Les originaux des nouveaux visuels et leurs indications de provenance sont dans `design-assets/news/` ; `node scripts/optimize-news-images.mjs` recrée leurs variantes WebP.
 
 ## Vérifier le projet
 

@@ -1,62 +1,84 @@
-import { useRef, useState } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ArrowDown, ArrowUpRight, Clock3, X } from 'lucide-react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { ArrowRight, ArrowUpRight, Clock3, X } from 'lucide-react'
 import { newsArticles, newsCategories, newsImageSources, readingMinutes, type NewsArticle, type NewsCategory } from '../lib/news-content'
 import './news.css'
+
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
 
 function ArticleMeta({ article }: { article: NewsArticle }) {
   return (
     <div className="news-meta">
-      {article.publishedAt ? <time dateTime={article.publishedAt}>{new Date(article.publishedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time> : <span>{article.isDemo ? 'Exemple éditorial' : article.format}</span>}
+      <span>{article.author}</span>
       <span className="news-meta-dot" aria-hidden="true" />
-      <span className="news-read-time"><Clock3 size={12} aria-hidden="true" />{readingMinutes(article)} min de lecture</span>
+      <time dateTime={article.publishedAt}>{dateFormatter.format(new Date(article.publishedAt))}</time>
+      <span className="news-meta-dot" aria-hidden="true" />
+      <span className="news-read-time"><Clock3 size={12} aria-hidden="true" />{readingMinutes(article)} min</span>
     </div>
   )
 }
 
-function ArticleCard({ article, featured, onOpen }: { article: NewsArticle; featured: boolean; onOpen: (article: NewsArticle, trigger: HTMLElement) => void }) {
+function ArticleCard({ article, featured, onUnavailable }: { article: NewsArticle; featured?: boolean; onUnavailable: (event: MouseEvent<HTMLAnchorElement>, label: string) => void }) {
   return (
     <article className={`news-card${featured ? ' news-card-featured' : ''}`}>
-      <div className="news-card-image-wrap">
-        <img className="news-card-image" src={article.image} srcSet={newsImageSources(article)} sizes={featured ? '(max-width: 767px) calc(100vw - 44px), (max-width: 1512px) 52vw, 735px' : '(max-width: 575px) 108px, (max-width: 767px) 160px, 190px'} alt={article.imageAlt} width={1536} height={1024} style={{ objectPosition: article.imagePosition }} loading="lazy" decoding="async" />
-        {featured && <span className="news-feature-label">À LA UNE</span>}
-      </div>
-      <div className="news-card-copy">
-        <div className="news-category-line"><span className={`news-category category-${article.category.toLocaleLowerCase('fr')}`}>{article.category}</span><span className="news-format">{article.format}</span></div>
-        <h3><button type="button" className="news-title-button" onClick={event => onOpen(article, event.currentTarget)} aria-haspopup="dialog">{article.title}</button></h3>
-        <p className="news-excerpt">{article.excerpt}</p>
-        <ArticleMeta article={article} />
-        {featured && <span className="news-feature-read" aria-hidden="true">Lire l’article<span><ArrowUpRight size={20} strokeWidth={1.5} /></span></span>}
-      </div>
+      <a className="news-card-link" href={article.href} aria-label={article.title} onClick={event => onUnavailable(event, `La page « ${article.title} » sera bientôt disponible.`)}>
+        <div className="news-card-image-wrap">
+          <img
+            className="news-card-image"
+            src={article.image}
+            srcSet={newsImageSources(article)}
+            sizes={featured ? '(max-width: 899px) calc(100vw - 44px), (max-width: 1512px) 52vw, 735px' : '(max-width: 575px) 118px, (max-width: 899px) 30vw, 210px'}
+            alt={article.imageAlt}
+            width={1536}
+            height={1024}
+            style={{ objectPosition: article.imagePosition }}
+            loading="lazy"
+            decoding="async"
+          />
+          {featured && <span className="news-feature-label">À LA UNE</span>}
+        </div>
+        <div className="news-card-copy">
+          <div className="news-category-line">
+            <span className={`news-category category-${article.category.toLocaleLowerCase('fr')}`}>{article.category}</span>
+            <span className="news-format">{article.format}</span>
+          </div>
+          <h3>{article.title}</h3>
+          <p className="news-excerpt">{article.excerpt}</p>
+          <ArticleMeta article={article} />
+          <span className="news-card-cta" aria-hidden="true">
+            Lire l’article
+            <span><ArrowUpRight size={featured ? 20 : 17} strokeWidth={1.6} /></span>
+          </span>
+        </div>
+      </a>
     </article>
   )
 }
 
 export function NewsSection() {
   const [category, setCategory] = useState<NewsCategory>('Tout voir')
-  const [visibleCount, setVisibleCount] = useState(4)
-  const [selected, setSelected] = useState<NewsArticle | null>(null)
-  const returnFocus = useRef<HTMLElement | null>(null)
-  const grid = useRef<HTMLDivElement | null>(null)
-  const reduceMotion = useReducedMotion()
+  const [notice, setNotice] = useState('')
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const filtered = newsArticles.filter(article => category === 'Tout voir' || article.category === category)
-  const visible = filtered.slice(0, visibleCount)
-  const duration = reduceMotion ? 0 : 0.22
+  const visible = filtered.slice(0, 4)
 
-  function chooseCategory(next: NewsCategory) {
-    setCategory(next)
-    setVisibleCount(4)
+  useEffect(() => () => {
+    if (noticeTimer.current) clearTimeout(noticeTimer.current)
+  }, [])
+
+  function showNotice(message: string) {
+    if (noticeTimer.current) clearTimeout(noticeTimer.current)
+    setNotice(message)
+    noticeTimer.current = setTimeout(() => setNotice(''), 5000)
   }
 
-  function showMore() {
-    const previousCount = visible.length
-    setVisibleCount(count => count + 4)
-    // Le bouton disparaît au dernier lot : placer le focus sur le premier
-    // nouvel article permet de poursuivre la lecture au clavier.
-    requestAnimationFrame(() => {
-      grid.current?.querySelectorAll<HTMLButtonElement>('.news-title-button')[previousCount]?.focus({ preventScroll: true })
-    })
+  function holdFutureLink(event: MouseEvent<HTMLAnchorElement>, message: string) {
+    event.preventDefault()
+    showNotice(message)
   }
 
   return (
@@ -69,44 +91,28 @@ export function NewsSection() {
 
         <div className="news-toolbar">
           <div className="news-filters" role="group" aria-label="Filtrer les actualités">
-            {newsCategories.map(item => <button key={item} type="button" aria-pressed={category === item} onClick={() => chooseCategory(item)}>{item}</button>)}
+            {newsCategories.map(item => <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}
           </div>
-          <span className="news-demo-label"><span aria-hidden="true" />Contenus de démonstration</span>
+          <span className="news-edition"><span aria-hidden="true" />DERNIÈRE ÉDITION</span>
         </div>
 
-        <div ref={grid} className={`news-grid${visible.length < 4 ? ' news-grid-filtered' : ''}`}>
-          {visible.map((article, index) => <ArticleCard key={article.id} article={article} featured={index === 0} onOpen={(item, trigger) => { returnFocus.current = trigger; setSelected(item) }} />)}
+        <div className={`news-grid${visible.length < 4 ? ' news-grid-filtered' : ''}`}>
+          {visible[0] && <ArticleCard article={visible[0]} featured onUnavailable={holdFutureLink} />}
+          {visible.length > 1 && <div className="news-secondary-list">{visible.slice(1).map(article => <ArticleCard key={article.id} article={article} onUnavailable={holdFutureLink} />)}</div>}
         </div>
 
         <div className="news-bottom-line">
-          <p role="status" aria-live="polite" aria-atomic="true">{visible.length} sur {filtered.length} articles{category !== 'Tout voir' ? ` · ${category}` : ''}</p>
-          {visible.length < filtered.length && <button type="button" className="news-load-more" onClick={showMore}>Afficher plus d’articles<ArrowDown size={17} strokeWidth={1.5} aria-hidden="true" /></button>}
+          <p>{category === 'Tout voir' ? 'La sélection de la rédaction' : `${filtered.length} publication${filtered.length > 1 ? 's' : ''} · ${category}`}</p>
+          <a className="news-all-link" href="/actualites" onClick={event => holdFutureLink(event, 'La page de toutes les actualités sera bientôt disponible.')}>
+            Voir toutes les actualités <ArrowRight size={17} strokeWidth={1.6} aria-hidden="true" />
+          </a>
           <span className="news-bottom-signature" aria-hidden="true">UN AUTRE REGARD SUR DEMAIN.</span>
         </div>
       </div>
 
-      <Dialog.Root open={selected !== null} onOpenChange={open => { if (!open) setSelected(null) }}>
-        <AnimatePresence>
-          {selected && (
-            <Dialog.Portal forceMount>
-              <Dialog.Overlay forceMount asChild><motion.div className="dialog-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration }} /></Dialog.Overlay>
-              <Dialog.Content forceMount asChild onCloseAutoFocus={event => { event.preventDefault(); returnFocus.current?.focus({ preventScroll: true }) }}>
-                <motion.div className="news-reader" initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduceMotion ? 0 : 8 }} transition={{ duration }}>
-                  <div className="news-reader-toolbar"><span>OCÉAN MÉDIA TV <span aria-hidden="true">/</span> {selected.category}</span><Dialog.Close className="icon-button" aria-label="Fermer l’article"><X size={22} strokeWidth={1.6} aria-hidden="true" /></Dialog.Close></div>
-                  <div className="news-reader-head">
-                    {selected.isDemo && <span className="news-reader-demo">Article de démonstration</span>}
-                    <Dialog.Title>{selected.title}</Dialog.Title>
-                    <Dialog.Description>{selected.excerpt}</Dialog.Description>
-                    <ArticleMeta article={selected} />
-                  </div>
-                  <figure className="news-reader-figure"><img src={selected.image} srcSet={newsImageSources(selected)} sizes="(max-width: 800px) calc(100vw - 32px), 760px" alt={selected.imageAlt} width={1536} height={1024} decoding="async" /><figcaption>{selected.isDemo ? 'Photographie d’illustration générée pour cet exemple éditorial.' : selected.imageAlt}</figcaption></figure>
-                  <div className="news-reader-body">{selected.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}<div className="news-reader-end"><span aria-hidden="true" />OCÉAN MÉDIA TV</div></div>
-                </motion.div>
-              </Dialog.Content>
-            </Dialog.Portal>
-          )}
-        </AnimatePresence>
-      </Dialog.Root>
+      <div className={`news-notice${notice ? ' is-visible' : ''}`} role="status" aria-live="polite" aria-atomic="true">
+        {notice && <><span>{notice}</span><button type="button" aria-label="Fermer la notification" onClick={() => setNotice('')}><X size={16} aria-hidden="true" /></button></>}
+      </div>
     </section>
   )
 }

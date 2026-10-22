@@ -17,6 +17,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [query, setQuery] = useState('')
   const [notice, setNotice] = useState('')
+  const [activeHref, setActiveHref] = useState('/')
   const returnFocus = useRef<HTMLElement | null>(null)
   const pendingSection = useRef<string | null>(null)
   const searchInput = useRef<HTMLInputElement>(null)
@@ -24,10 +25,26 @@ export function Header() {
   const reduceMotion = useReducedMotion()
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12)
+    let frame = 0
+    const onScroll = () => {
+      setScrolled(window.scrollY > 12)
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const news = document.getElementById('actualites')
+        if (!news) return
+        const header = document.querySelector<HTMLElement>('.site-header')
+        const threshold = (header?.getBoundingClientRect().height ?? 0) + Math.min(120, window.innerHeight * .18)
+        setActiveHref(news.getBoundingClientRect().top <= threshold ? '#actualites' : '/')
+      })
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('resize', onScroll)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
   useEffect(() => {
@@ -60,6 +77,7 @@ export function Header() {
       const section = document.getElementById(id)
       if (!section) return
       if (window.location.hash !== `#${id}`) window.history.pushState(null, '', `#${id}`)
+      setActiveHref(`#${id}`)
       section.focus({ preventScroll: true })
       section.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'instant' : 'smooth' })
     })
@@ -76,6 +94,7 @@ export function Header() {
       else goToSection(id)
     } else if (item.available) {
       if (window.location.hash) window.history.pushState(null, '', window.location.pathname + window.location.search)
+      setActiveHref('/')
       window.scrollTo({ top: 0, behavior: reduceMotion ? 'instant' : 'smooth' })
     } else {
       notify(`La rubrique « ${item.label} » sera bientôt disponible.`)
@@ -107,7 +126,7 @@ export function Header() {
             <ul>
               {navigation.map(item => (
                 <li key={item.href}>
-                  <a className={`navigation-link${item.href === '/' ? ' is-active' : ''}`} href={item.href} aria-current={item.href === '/' ? 'page' : undefined} onClick={event => navigate(event, item)}>{item.label}</a>
+                  <a className={`navigation-link${item.href === activeHref ? ' is-active' : ''}`} href={item.href} aria-current={item.href === activeHref ? 'page' : undefined} onClick={event => navigate(event, item)}>{item.label}</a>
                 </li>
               ))}
             </ul>
@@ -156,7 +175,7 @@ export function Header() {
                       <Dialog.Title className="sr-only">Menu principal</Dialog.Title>
                       <Dialog.Description className="sr-only">Explorez les rubriques d’Océan Média TV.</Dialog.Description>
                       <nav className="mobile-navigation" aria-label="Navigation mobile"><ul>{navigation.map((item, index) => (
-                        <li key={item.href}><a href={item.href} className={`mobile-navigation-link${item.href === '/' ? ' is-active' : ''}`} aria-current={item.href === '/' ? 'page' : undefined} onClick={event => navigate(event, item)}><span className="mobile-nav-index">0{index + 1}</span><span>{item.label}</span>{item.href === '/' ? <span className="active-dot" aria-hidden="true" /> : <ArrowUpRight size={17} strokeWidth={1.5} aria-hidden="true" />}</a></li>
+                        <li key={item.href}><a href={item.href} className={`mobile-navigation-link${item.href === activeHref ? ' is-active' : ''}`} aria-current={item.href === activeHref ? 'page' : undefined} onClick={event => navigate(event, item)}><span className="mobile-nav-index">0{index + 1}</span><span>{item.label}</span>{item.href === activeHref ? <span className="active-dot" aria-hidden="true" /> : <ArrowUpRight size={17} strokeWidth={1.5} aria-hidden="true" />}</a></li>
                       ))}</ul></nav>
                       <div className="mobile-menu-bottom">
                         <button type="button" className="mobile-contact-button" onClick={() => setPanel('contact')}>Parlons de vos projets <ArrowUpRight size={19} aria-hidden="true" /></button>
@@ -178,7 +197,7 @@ export function Header() {
                           <p className="search-results-label" role="status" aria-live="polite">{query ? `${results.length} rubrique${results.length > 1 ? 's' : ''} correspondante${results.length > 1 ? 's' : ''}` : 'NOS RUBRIQUES'}</p>
                           <ul className="search-results">{results.map(item => <li key={item.href}><a href={item.href} onClick={event => navigate(event, item)}><span>{item.label}</span>{item.available ? <ArrowRight size={16} aria-hidden="true" /> : <span className="coming-soon">À venir <ArrowUpRight size={14} aria-hidden="true" /></span>}</a></li>)}</ul>
                           {results.length === 0 && <p className="empty-search">Aucune rubrique ne correspond à « {query} ».</p>}
-                          <p className="search-footnote">Les articles et vidéos seront disponibles prochainement.</p>
+                          <p className="search-footnote">Les pages détaillées des articles et vidéos seront disponibles prochainement.</p>
                         </>
                       ) : (
                         <>
