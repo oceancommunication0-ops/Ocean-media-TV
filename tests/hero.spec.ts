@@ -2,9 +2,9 @@ import { expect, test } from '@playwright/test'
 
 const heroTitle = 'L’info qui ouvre les horizons.'
 const features = [
-  { tab: 'S’informer', title: 'Faire entendre les voix de demain.' },
-  { tab: 'Se former', title: 'Les compétences ouvrent des portes.' },
-  { tab: 'S’inspirer', title: 'Des idées qui deviennent possibles.' },
+  { tab: 'S’informer', title: 'Faire entendre les voix de demain.', description: 'Des portraits et des initiatives qui donnent toute leur place aux voix de la jeunesse.' },
+  { tab: 'Se former', title: 'Les compétences ouvrent des portes.', description: 'Des savoirs concrets pour développer ses compétences et élargir ses perspectives.' },
+  { tab: 'S’inspirer', title: 'Des idées qui deviennent possibles.', description: 'Des idées, des parcours et des opportunités pour encourager le passage à l’action.' },
 ] as const
 
 test.beforeEach(async ({ page }) => {
@@ -16,7 +16,9 @@ test('la Hero présente son identité et des images locales chargées', async ({
   await expect(hero).toBeVisible()
   await expect(hero.getByRole('heading', { level: 1 })).toHaveText(heroTitle)
   await expect(hero.getByRole('button', { name: 'Explorer nos regards', exact: true })).toBeVisible()
-  await expect(hero.getByRole('button', { name: 'L’esprit Océan', exact: true })).toBeVisible()
+  await expect(hero.getByRole('button', { name: 'L’esprit Océan', exact: true })).toHaveCount(0)
+  await expect(hero).not.toContainText('Une initiative d’Océan Communication')
+  await expect(hero).not.toContainText('Les idées nous relient.')
 
   const images = hero.getByRole('img')
   expect(await images.count()).toBeGreaterThan(0)
@@ -48,6 +50,7 @@ test('les regards se sélectionnent au clavier avec un seul tab actif', async ({
     const panel = hero.getByRole('tabpanel')
     await expect(panel).toHaveCount(1)
     await expect(panel.getByRole('heading', { name: feature.title, exact: true })).toBeVisible()
+    await expect(panel).toContainText(feature.description)
     await expect(selected).toHaveAttribute('aria-controls', (await panel.getAttribute('id'))!)
     await expect(panel).toHaveAttribute('aria-labelledby', (await selected.getAttribute('id'))!)
     if (index < features.length - 1) await page.keyboard.press('ArrowRight')
@@ -65,8 +68,6 @@ test('les regards se sélectionnent au clavier avec un seul tab actif', async ({
   await page.keyboard.press('Tab')
   await expect(hero.getByRole('tabpanel')).toBeFocused()
   await page.keyboard.press('Tab')
-  await expect(hero.getByRole('button', { name: 'Lire notre regard', exact: true })).toBeFocused()
-  await page.keyboard.press('Tab')
   await expect.poll(() => hero.evaluate(element => element.contains(document.activeElement))).toBe(false)
 })
 
@@ -80,41 +81,16 @@ test('Explorer nos regards ramène au premier regard et lui donne le focus', asy
   await expect(first).toBeInViewport()
 })
 
-test('chaque regard ouvre son contenu et restitue le focus après Échap', async ({ page }) => {
+test('chaque regard affiche sa description sans ouvrir de fenêtre', async ({ page }) => {
   const hero = page.getByRole('region', { name: heroTitle, exact: true })
   for (const feature of features) {
     await hero.getByRole('tab', { name: feature.tab, exact: true }).click()
-    const trigger = hero.getByRole('button', { name: 'Lire notre regard', exact: true })
-    await trigger.click()
-    const dialog = page.getByRole('dialog', { name: feature.title, exact: true })
-    await expect(dialog).toBeVisible()
-    await expect.poll(() => dialog.evaluate(element => element.contains(document.activeElement))).toBe(true)
-    await page.keyboard.press('Tab')
-    await expect.poll(() => dialog.evaluate(element => element.contains(document.activeElement))).toBe(true)
-    await page.keyboard.press('Escape')
-    await expect(dialog).toHaveCount(0)
-    await expect(trigger).toBeFocused()
+    const panel = hero.getByRole('tabpanel')
+    await expect(panel.getByRole('heading', { name: feature.title, exact: true })).toBeVisible()
+    await expect(panel).toContainText(feature.description)
+    await expect(hero.getByRole('button', { name: 'Lire notre regard', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('dialog')).toHaveCount(0)
   }
-})
-
-test.describe('Hero mobile', () => {
-  test.use({ viewport: { width: 390, height: 844 } })
-
-  test('la mission se lit dans un dialogue accessible et ferme sans perdre le focus', async ({ page }) => {
-    const hero = page.getByRole('region', { name: heroTitle, exact: true })
-    const trigger = hero.getByRole('button', { name: 'L’esprit Océan', exact: true })
-    await trigger.click()
-    const dialog = page.getByRole('dialog', { name: 'Informer. Former. Inspirer.', exact: true })
-    await expect(dialog).toBeVisible()
-    await expect(dialog).toContainText('Océan Communication')
-    await expect.poll(() => dialog.evaluate(element => element.contains(document.activeElement))).toBe(true)
-    await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflow)).toBe('hidden')
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
-    await page.keyboard.press('Escape')
-    await expect(dialog).toHaveCount(0)
-    await expect(trigger).toBeFocused()
-    await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden')
-  })
 })
 
 for (const width of [320, 390, 768, 1024, 1280, 1440]) {

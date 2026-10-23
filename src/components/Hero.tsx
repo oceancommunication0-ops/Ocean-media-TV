@@ -1,11 +1,8 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
 import { AnimatePresence, motion, useIsPresent, useReducedMotion } from 'framer-motion'
-import { ArrowDownRight, ArrowUpRight, Compass, MoveUpRight, X } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { heroStories, type HeroStory } from '../lib/hero-content'
 import './hero.css'
-
-type HeroPanel = 'mission' | 'story' | null
 
 function imageSources(path: string) {
   const base = path.replace(/\.webp$/, '')
@@ -37,12 +34,9 @@ function EditorialPhoto({ story, duration, priority }: { story: HeroStory; durat
 
 export function Hero() {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [panel, setPanel] = useState<HeroPanel>(null)
   const tabs = useRef<(HTMLButtonElement | null)[]>([])
-  const returnFocus = useRef<HTMLElement | null>(null)
   const reduceMotion = useReducedMotion()
   const story = heroStories[activeIndex]
-  const duration = reduceMotion ? 0 : 0.32
 
   function selectTab(index: number, focus = false) {
     setActiveIndex(index)
@@ -67,11 +61,6 @@ export function Hero() {
     tabs.current[0]?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'instant' : 'smooth' })
   }
 
-  function openPanel(next: Exclude<HeroPanel, null>, trigger: HTMLElement) {
-    returnFocus.current = trigger
-    setPanel(next)
-  }
-
   return (
     <section className="ocean-hero" aria-labelledby="hero-title">
       <div className="hero-container">
@@ -88,16 +77,8 @@ export function Hero() {
               <p className="hero-description">Le média qui relie la jeunesse congolaise aux idées, aux savoirs et aux opportunités pour agir.</p>
               <div className="hero-actions">
                 <button type="button" className="hero-primary-action" onClick={explore}>Explorer nos regards<ArrowDownRight size={20} strokeWidth={1.7} aria-hidden="true" /></button>
-                <button type="button" className="hero-mission-action" aria-haspopup="dialog" onClick={event => openPanel('mission', event.currentTarget)}>L’esprit Océan<ArrowUpRight size={16} strokeWidth={1.7} aria-hidden="true" /></button>
               </div>
             </motion.div>
-
-            <div className="hero-origin">
-              <span className="hero-origin-icon"><Compass size={22} strokeWidth={1.3} aria-hidden="true" /></span>
-              <p>Une initiative d’<br /><strong>Océan Communication</strong></p>
-              <span className="hero-origin-line" aria-hidden="true" />
-              <span className="hero-origin-note">Les idées nous relient.<br />L’avenir nous rassemble.</span>
-            </div>
           </div>
 
           <div className="hero-editorial">
@@ -137,7 +118,7 @@ export function Hero() {
               <div className="hero-feature-content">
                 <span className="hero-feature-category">{story.category}</span>
                 <h2 className="hero-feature-title">{story.title}</h2>
-                <button type="button" className="hero-feature-action" aria-haspopup="dialog" onClick={event => openPanel('story', event.currentTarget)}><span>Lire notre regard</span><span className="hero-feature-arrow"><MoveUpRight size={24} strokeWidth={1.4} aria-hidden="true" /></span></button>
+                <p className="hero-feature-description">{story.introduction}</p>
               </div>
             </div>
 
@@ -149,41 +130,6 @@ export function Hero() {
           <span className="hero-colophon-mark" aria-hidden="true"><span />INFORMER <span />FORMER <span />INSPIRER</span>
         </div>
       </div>
-
-      <Dialog.Root open={panel !== null} onOpenChange={open => { if (!open) setPanel(null) }}>
-        <AnimatePresence>
-          {panel && (
-            <Dialog.Portal forceMount>
-              <Dialog.Overlay asChild forceMount><motion.div className="dialog-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration }} /></Dialog.Overlay>
-              <Dialog.Content asChild forceMount onCloseAutoFocus={event => { event.preventDefault(); returnFocus.current?.focus({ preventScroll: true }) }}>
-                <motion.div className={`hero-dialog${panel === 'mission' ? ' hero-dialog-mission' : ''}`} initial={{ opacity: 0, y: reduceMotion ? 0 : 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduceMotion ? 0 : 8 }} transition={{ duration }}>
-                  <div className="hero-dialog-top"><span>{panel === 'mission' ? 'L’ESPRIT OCÉAN' : `LE REGARD OCÉAN · ${story.category}`}</span><Dialog.Close className="icon-button" aria-label="Fermer la fenêtre"><X size={22} strokeWidth={1.6} aria-hidden="true" /></Dialog.Close></div>
-                  {panel === 'mission' ? (
-                    <div className="hero-mission-content">
-                      <Dialog.Title className="hero-mission-title">Informer. <br /><span>Former. </span><br /><em>Inspirer.</em></Dialog.Title>
-                      <Dialog.Description className="hero-dialog-introduction">L’information qui rapproche les opportunités de la jeunesse.</Dialog.Description>
-                      <p>Océan Média TV est le média numérique d’Océan Communication, une structure congolaise engagée dans l’information, la formation et l’accompagnement de la jeunesse.</p>
-                      <p>Notre conviction : une information accessible, des savoirs partagés et des parcours inspirants peuvent ouvrir de nouvelles perspectives. Nous voulons créer des liens entre les jeunes et les opportunités qui les aident à avancer.</p>
-                      <div className="hero-mission-signature"><span aria-hidden="true" />OCÉAN MÉDIA TV<ArrowUpRight size={19} aria-hidden="true" /></div>
-                    </div>
-                  ) : (
-                    <>
-                      <img className="hero-dialog-image" src={story.image} srcSet={imageSources(story.image)} sizes="(max-width: 730px) calc(100vw - 40px), 690px" alt="" width={1536} height={1024} loading="lazy" decoding="async" style={{ objectPosition: story.dialogPosition }} />
-                      <div className="hero-story-content">
-                        <Dialog.Title className="hero-dialog-title">{story.title}</Dialog.Title>
-                        <Dialog.Description className="hero-dialog-introduction">{story.introduction}</Dialog.Description>
-                        {story.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
-                        <ul className="hero-story-tags" aria-label="Formats et thématiques">{story.tags.map(tag => <li key={tag}>{tag}</li>)}</ul>
-                        <p className="hero-photo-credit">Visuel d’illustration créé pour Océan Média TV.</p>
-                      </div>
-                    </>
-                  )}
-                </motion.div>
-              </Dialog.Content>
-            </Dialog.Portal>
-          )}
-        </AnimatePresence>
-      </Dialog.Root>
     </section>
   )
 }

@@ -15,7 +15,7 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 
 - `src/App.tsx` : assemblage du Header, des sept sections du `<main>` et du Footer.
 - `src/components/` : Header, navigation et interactions associées.
-- `src/components/Hero.tsx` et `hero.css` : composition éditoriale, sélection des regards et fenêtres de lecture.
+- `src/components/Hero.tsx` et `hero.css` : composition éditoriale et sélection des regards.
 - `src/lib/hero-content.ts` : trois regards éditoriaux, textes et références des images.
 - `src/components/NewsSection.tsx` et `news.css` : sélection d’articles, filtres thématiques et liens préparés pour les futures pages éditoriales.
 - `src/lib/news-content.ts` : exemples d’articles, catégories et métadonnées à remplacer par les publications validées.
@@ -42,7 +42,7 @@ Les rubriques futures affichent une notification sans charger de page inexistant
 
 Le contact utilise le numéro `+243 97 248 60 33`, fourni dans le document de présentation. L’adresse email n’y étant pas renseignée, elle n’est pas inventée. Les URL Facebook, YouTube et Instagram restent nulles dans la configuration jusqu’à la réception des liens officiels.
 
-La Hero propose trois regards sur la jeunesse, les compétences et l’entrepreneuriat. Les onglets fonctionnent avec les flèches du clavier, Début et Fin ; ils ne défilent pas automatiquement. « Lire notre regard » ouvre le texte correspondant. « L’esprit Océan » présente la mission du média. Ces fenêtres gèrent le focus, Échap et le blocage du défilement.
+La Hero propose trois regards sur la jeunesse, les compétences et l’entrepreneuriat. Les onglets fonctionnent avec les flèches du clavier, Début et Fin ; ils ne défilent pas automatiquement. Chaque photographie affiche directement un titre et une courte description, sans fenêtre de lecture.
 
 Les textes de la Hero sont fondés sur le document de présentation fourni, sans actualités, dates ni statistiques inventées. Ses photographies sont des illustrations générées pour le projet et ne représentent pas des membres réels de l’équipe ou des événements du média. Elles sont proposées en WebP à trois résolutions avec `srcset` et préchargement du premier visuel.
 
