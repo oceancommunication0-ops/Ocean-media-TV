@@ -4,6 +4,7 @@ import { Hero } from './components/Hero'
 import { NewsSection } from './components/NewsSection'
 import { OceanTvSection } from './components/OceanTvSection'
 import { OpportunitiesSection } from './components/OpportunitiesSection'
+import { TrainingSection } from './components/TrainingSection'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <NewsSection />
         <OceanTvSection />
         <OpportunitiesSection />
+        <TrainingSection />
       </main>
     </MotionConfig>
   )

@@ -24,7 +24,7 @@ test('Opportunités suit Océan TV et présente six catégories et trois annonce
   await expect(opportunities).toHaveAttribute('id', 'opportunites')
   await expect(opportunities).toHaveAttribute('aria-labelledby', 'opportunities-title')
   await expect(opportunities.getByRole('heading', { level: 2, name: 'Opportunités', exact: true })).toBeVisible()
-  await expect(page.locator('main > section')).toHaveCount(4)
+  await expect(page.locator('main > section')).toHaveCount(5)
   expect(await page.locator('main > section').nth(3).getAttribute('id')).toBe('opportunites')
   await expect(categories(page).getByRole('button')).toHaveCount(6)
   await expect(categories(page).locator('[aria-pressed="true"]')).toHaveCount(0)

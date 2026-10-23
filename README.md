@@ -1,6 +1,6 @@
 # Océan Média TV
 
-Fondations React, TypeScript, Tailwind CSS, Header responsive, Hero éditoriale, Actualités, espace Océan TV et Opportunités. La page d’accueil contient ces quatre sections ; les prochaines sections restent à développer.
+Fondations React, TypeScript, Tailwind CSS, Header responsive, Hero éditoriale, Actualités, espace Océan TV, Opportunités et Formations. La page d’accueil contient ces cinq sections ; les prochaines sections restent à développer.
 
 ## Démarrer sous Windows
 
@@ -13,7 +13,7 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 
 ## Structure
 
-- `src/App.tsx` : assemblage du Header et des quatre sections, avec un `<main>` sémantique.
+- `src/App.tsx` : assemblage du Header et des cinq sections, avec un `<main>` sémantique.
 - `src/components/` : Header, navigation et interactions associées.
 - `src/components/Hero.tsx` et `hero.css` : composition éditoriale, sélection des regards et fenêtres de lecture.
 - `src/lib/hero-content.ts` : trois regards éditoriaux, textes et références des images.
@@ -23,6 +23,8 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 - `src/lib/tv-content.ts` : sélection des vidéos et métadonnées indépendantes de la présentation.
 - `src/components/OpportunitiesSection.tsx` et `opportunities.css` : catégories interactives et sélection d’annonces.
 - `src/lib/opportunities-content.ts` : catégories et annonces de présentation, indépendantes de l’affichage.
+- `src/components/TrainingSection.tsx` et `training.css` : photographie, six domaines de formation et bloc éditorial.
+- `src/lib/training-content.ts` : domaines permanents et modèle séparé des futures sessions programmées.
 - `src/lib/` : configuration commune des rubriques et des coordonnées.
 - `src/index.css` : identité visuelle, styles responsive et accessibilité.
 - `public/` : fichiers statiques et logo.
@@ -65,6 +67,14 @@ Les six annonces sont des contenus de présentation autorisés par l’utilisate
 
 Les cartes préparent les futures URL `/opportunites/<annonce>`, tandis que « Toutes les opportunités » mène à `/opportunites`. Ces pages seront développées ultérieurement : les clics donnent pour le moment un retour discret sans charger de route inexistante. La navigation principale et la recherche mènent à la section ; l’état actif suit le défilement, y compris sur mobile.
 
+## Formations
+
+La section `#formations` suit Opportunités. Elle présente les six domaines d’intervention demandés, avec leurs descriptions : art oratoire, leadership, management, techniques de rédaction, entrepreneuriat et compétences professionnelles. Ces cartes sont informatives ; elles ne représentent ni des inscriptions ni des sessions ouvertes. Les interactions de survol restent discrètes et respectent la réduction des mouvements. Le Header et la recherche mènent à la section avec déplacement du focus et état actif lié au défilement.
+
+La véritable photographie de prise de parole est une image d’illustration de Monstera Production, issue de Pexels ; elle ne représente pas une activité revendiquée d’Océan Communication. Le crédit et le lien de provenance sont visibles sous l’image. L’original et la licence sont documentés dans `design-assets/training/README.md`. Le script `node scripts/optimize-training-image.mjs` produit les variantes WebP de 480, 800 et 1200 pixels, servies avec `srcset`, dimensions explicites et chargement différé.
+
+`trainingDomains` reste indépendant de `trainingSessions`. La collection des sessions est vide et le type `TrainingSession` prévoit les domaines associés, le statut, les dates, le fuseau horaire, le format, le lieu et un éventuel lien d’inscription. La future page pourra consommer cette collection après validation d’une programmation réelle, sans modifier les domaines permanents. Aucun calendrier, date ou prix n’est inventé pour cette étape.
+
 ## Vérifier le projet
 
 ```powershell
@@ -73,4 +83,4 @@ npm.cmd run test:e2e
 npm.cmd run build
 ```
 
-Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent le Header et les quatre sections : filtres, fenêtres, navigation active, chargement différé de l’iframe, liens des futures pages, clavier, réduction des mouvements et débordements aux différentes largeurs. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur.
+Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent le Header et les cinq sections : filtres, fenêtres, navigation active, chargement différé de l’iframe et des images, liens des futures pages, clavier, réduction des mouvements et débordements aux différentes largeurs. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur.
