@@ -5,7 +5,7 @@ export const navigation = [
   { label: 'Opportunités', href: '#opportunites', available: true },
   { label: 'Formations', href: '#formations', available: true },
   { label: 'Événements', href: '#evenements', available: true },
-  { label: 'À propos', href: '#ocean-communication', available: true },
+  { label: 'À propos', href: '/a-propos', available: false },
 ] as const
 
 export type NavigationItem = (typeof navigation)[number]

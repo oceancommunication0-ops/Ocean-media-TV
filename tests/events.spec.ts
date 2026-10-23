@@ -9,7 +9,7 @@ test('l’agenda suit Formations, affiche six rendez-vous et ne simule aucune in
   const section = page.locator('#evenements')
   await section.scrollIntoViewIfNeeded()
   await expect(section.getByRole('heading', { level: 2 })).toHaveText('Les rendez-vous à ne pas manquer.')
-  expect(await page.locator('main > section').evaluateAll(items => items.map(item => item.id))).toEqual(['', 'actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements', 'portraits', 'ocean-communication'])
+  expect(await page.locator('main > section').evaluateAll(items => items.map(item => item.id))).toEqual(['', 'actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements', 'portraits'])
   await expect(section.getByRole('article')).toHaveCount(6)
   await expect(section.locator('.event-featured')).toHaveCount(1)
   await expect(section.locator('.events-secondary article')).toHaveCount(2)

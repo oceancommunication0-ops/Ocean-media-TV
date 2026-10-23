@@ -26,7 +26,7 @@ test('Actualités suit la Hero et présente quatre publications finalisées', as
   await expect(section).toHaveAttribute('id', 'actualites')
   await expect(section).toHaveAttribute('aria-labelledby', 'news-title')
   await expect(section.getByRole('heading', { level: 2, name: 'Actualités', exact: true })).toBeVisible()
-  await expect(page.locator('main > section')).toHaveCount(8)
+  await expect(page.locator('main > section')).toHaveCount(7)
   expect(await page.locator('main > section').nth(1).getAttribute('id')).toBe('actualites')
   await expect(section.getByText(/Exemple éditorial|Contenus de démonstration|Article de démonstration/i)).toHaveCount(0)
   await expect(section.getByRole('article')).toHaveCount(4)

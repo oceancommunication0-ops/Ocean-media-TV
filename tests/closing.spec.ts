@@ -18,33 +18,20 @@ test('trois récits éditoriaux préparent leurs pages sans lecteur en fenêtre'
   }
 })
 
-test('la structure, les missions et les signatures sont présentées sans partenaires inventés', async ({ page }) => {
-  const section = page.locator('#ocean-communication')
-  await expect(section.getByRole('heading', { level: 2 })).toHaveText('Bien plus qu’un média, un engagement pour la jeunesse.')
-  await expect(section).toContainText('Océan Média TV est une initiative d’Océan Communication')
-  for (const title of ['Former', 'Informer', 'Accompagner']) await expect(section.getByRole('heading', { name: title, exact: true })).toHaveCount(1)
-  await expect(section).toContainText('FORMER • INFORMER • ACCOMPAGNER')
-  await expect(section).toContainText('INFORMER • FORMER • INSPIRER')
-  await expect(section.getByRole('heading', { name: 'Construisons des opportunités ensemble.' })).toBeVisible()
-  const collaboration = section.getByRole('link', { name: /Parlons de collaboration/ })
-  const href = new URL((await collaboration.getAttribute('href'))!)
-  expect(href.origin + href.pathname).toBe('https://wa.me/243972486033')
-  expect(href.searchParams.get('text')).toContain('collaboration')
-  await expect(collaboration).toHaveAttribute('target', '_blank')
-  await expect(collaboration).toHaveAttribute('rel', /noopener/)
-  await expect(section.locator('.partners-list')).toHaveCount(0)
+test('la section À propos et ses liens ont été retirés de l’accueil', async ({ page }) => {
+  await expect(page.locator('#ocean-communication')).toHaveCount(0)
+  await expect(page.locator('#partenaires')).toHaveCount(0)
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Océan Communication', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('contentinfo').getByRole('link', { name: 'Collaborations & partenaires', exact: true })).toHaveCount(0)
 })
 
-test('le footer rejoint chaque rubrique, les partenaires et le haut de page avec le focus', async ({ page }) => {
+test('le footer rejoint chaque rubrique et le haut de page avec le focus', async ({ page }) => {
   const footer = page.getByRole('contentinfo')
   for (const [label, id] of [['Actualités', 'actualites'], ['Océan TV', 'ocean-tv'], ['Opportunités', 'opportunites'], ['Formations', 'formations'], ['Événements', 'evenements'], ['Initiatives & portraits', 'portraits']]) {
     await footer.getByRole('navigation', { name: 'Rubriques du pied de page' }).getByRole('link', { name: label, exact: true }).click()
     await expect(page).toHaveURL(new RegExp(`#${id}$`))
     await expect(page.locator(`#${id}`)).toBeFocused()
   }
-  await footer.getByRole('link', { name: 'Collaborations & partenaires' }).click()
-  await expect(page.locator('#partenaires')).toBeFocused()
-  await expect(page).toHaveURL(/#partenaires$/)
   await footer.getByRole('link', { name: 'Retour en haut' }).click()
   await expect(page).toHaveURL('/')
   await expect(page.getByRole('main')).toBeFocused()
@@ -79,7 +66,7 @@ test('informations et crédits : dialogue accessible, scroll bloqué, Échap et 
 for (const width of [320, 390, 768, 1024, 1440]) {
   test(`la fin de page reste lisible et utilisable à ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
-    for (const section of [page.locator('#portraits'), page.locator('#ocean-communication')]) {
+    for (const section of [page.locator('#portraits')]) {
       for (const img of await section.getByRole('img').all()) {
         await img.scrollIntoViewIfNeeded()
         await expect(img).toHaveAttribute('loading', 'lazy')

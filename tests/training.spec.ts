@@ -34,7 +34,7 @@ test('Formations suit Opportunités et présente des domaines sans inventer de s
   await expect(section).toHaveAttribute('id', 'formations')
   await expect(section).toHaveAttribute('aria-labelledby', 'training-title')
   await expect(section.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible()
-  expect(await page.locator('main > section').evaluateAll(sections => sections.map(section => section.id))).toEqual(['', 'actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements', 'portraits', 'ocean-communication'])
+  expect(await page.locator('main > section').evaluateAll(sections => sections.map(section => section.id))).toEqual(['', 'actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements', 'portraits'])
   await expect(section).toContainText('Des connaissances et des compétences pour transformer vos ambitions en actions concrètes.')
   await expect(section.getByRole('article')).toHaveCount(6)
   for (const [title, description] of topics) {

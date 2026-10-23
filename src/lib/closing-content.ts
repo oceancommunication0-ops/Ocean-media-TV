@@ -30,13 +30,3 @@ export const inspiringStories: readonly InspiringStory[] = [
     image: 'portrait-enterprise', alt: 'Une couturière souriante, un mètre ruban autour du cou, en noir et blanc — photographie d’illustration.', position: '50% 0%',
   },
 ]
-
-export interface Partner {
-  id: string
-  name: string
-  logo?: string
-  website?: string
-}
-
-// Add only partners and brand assets confirmed by Océan Communication.
-export const confirmedPartners: readonly Partner[] = []

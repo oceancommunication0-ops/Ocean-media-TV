@@ -7,7 +7,6 @@ import { OpportunitiesSection } from './components/OpportunitiesSection'
 import { TrainingSection } from './components/TrainingSection'
 import { EventsSection } from './components/EventsSection'
 import { PortraitsSection } from './components/PortraitsSection'
-import { CommunicationSection } from './components/CommunicationSection'
 import { Footer } from './components/Footer'
 
 export default function App() {
@@ -27,7 +26,6 @@ export default function App() {
         <TrainingSection />
         <EventsSection />
         <PortraitsSection />
-        <CommunicationSection />
       </main>
       <Footer />
     </MotionConfig>

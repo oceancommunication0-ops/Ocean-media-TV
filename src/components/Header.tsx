@@ -32,7 +32,7 @@ export function Header() {
       frame = requestAnimationFrame(() => {
         const header = document.querySelector<HTMLElement>('.site-header')
         const threshold = (header?.getBoundingClientRect().height ?? 0) + Math.min(120, window.innerHeight * .18)
-        const activeSection = ['actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements', 'portraits', 'ocean-communication'].filter(id => {
+        const activeSection = ['actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements', 'portraits'].filter(id => {
           const section = document.getElementById(id)
           return section && section.getBoundingClientRect().top <= threshold
         }).at(-1)

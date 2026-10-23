@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/')
 })
 
-test('desktop : identité, navigation active, huit sections et footer', async ({ page }, testInfo) => {
+test('desktop : identité, navigation active, sept sections et footer', async ({ page }, testInfo) => {
   await expect(page).toHaveTitle(/Océan Média TV/)
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
   await expect(page.locator('.signature')).toHaveText('INFORMER • FORMER • INSPIRER')
@@ -22,19 +22,18 @@ test('desktop : identité, navigation active, huit sections et footer', async ({
   const hero = main.getByRole('region', { name: 'L’info qui ouvre les horizons.', exact: true })
   await expect(hero).toHaveAttribute('aria-labelledby', 'hero-title')
   await expect(main.getByRole('heading', { level: 1 })).toHaveText('L’info qui ouvre les horizons.')
-  await expect(main.locator(':scope > section')).toHaveCount(8)
+  await expect(main.locator(':scope > section')).toHaveCount(7)
   await expect(page.getByRole('contentinfo')).toHaveCount(1)
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true })
 })
 
-test('À propos rejoint la présentation institutionnelle et devient actif', async ({ page }) => {
+test('À propos annonce la future page sans créer de lien cassé', async ({ page }) => {
   const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
   await navigation.getByRole('link', { name: 'À propos', exact: true }).click()
 
-  await expect(page).toHaveURL(/#ocean-communication$/)
-  await expect(page.locator('#ocean-communication')).toBeFocused()
-  await expect(navigation.getByRole('link', { name: 'À propos', exact: true })).toHaveAttribute('aria-current', 'page')
-  await expect(page.locator('.notification')).toHaveCount(0)
+  await expect(page.locator('.notification-region')).toContainText('La rubrique « À propos » sera bientôt disponible.')
+  await expect(page).toHaveURL('/')
+  await expect(navigation.getByRole('link', { name: 'Accueil', exact: true })).toHaveAttribute('aria-current', 'page')
 })
 
 test('recherche : filtre sans accents, aucun résultat, Échap et retour du focus', async ({ page }) => {
@@ -64,8 +63,8 @@ test('la sélection d’une rubrique dans la recherche ferme le dialogue', async
   await dialog.getByRole('searchbox').fill('propos')
   await dialog.getByRole('link', { name: /À propos/ }).click()
   await expect(dialog).toHaveCount(0)
-  await expect(page.locator('#ocean-communication')).toBeFocused()
-  await expect(page).toHaveURL(/#ocean-communication$/)
+  await expect(page.locator('.notification-region')).toContainText('La rubrique « À propos » sera bientôt disponible.')
+  await expect(page).toHaveURL('/')
 })
 
 test('le contact fournit les coordonnées réelles du document', async ({ page }) => {
@@ -131,8 +130,8 @@ test.describe('mobile', () => {
     const dialog = page.getByRole('dialog', { name: 'Menu principal' })
     await dialog.getByRole('link', { name: /À propos/ }).click()
     await expect(dialog).toHaveCount(0)
-    await expect(page).toHaveURL(/#ocean-communication$/)
-    await expect(page.locator('#ocean-communication')).toBeFocused()
+    await expect(page.locator('.notification-region')).toContainText('La rubrique « À propos » sera bientôt disponible.')
+    await expect(page).toHaveURL('/')
   })
 
   test('le contact depuis le menu reçoit le focus puis le rend au hamburger', async ({ page }) => {
