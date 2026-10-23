@@ -4,7 +4,7 @@ export const navigation = [
   { label: 'Océan TV', href: '#ocean-tv', available: true },
   { label: 'Opportunités', href: '#opportunites', available: true },
   { label: 'Formations', href: '#formations', available: true },
-  { label: 'Événements', href: '/evenements', available: false },
+  { label: 'Événements', href: '#evenements', available: true },
   { label: 'À propos', href: '/a-propos', available: false },
 ] as const
 

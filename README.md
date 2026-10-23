@@ -1,6 +1,6 @@
 # Océan Média TV
 
-Fondations React, TypeScript, Tailwind CSS, Header responsive, Hero éditoriale, Actualités, espace Océan TV, Opportunités et Formations. La page d’accueil contient ces cinq sections ; les prochaines sections restent à développer.
+Fondations React, TypeScript, Tailwind CSS, Header responsive, Hero éditoriale, Actualités, espace Océan TV, Opportunités, Formations et Événements & Agenda. La page d’accueil contient ces six sections ; les prochaines sections restent à développer.
 
 ## Démarrer sous Windows
 
@@ -13,7 +13,7 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 
 ## Structure
 
-- `src/App.tsx` : assemblage du Header et des cinq sections, avec un `<main>` sémantique.
+- `src/App.tsx` : assemblage du Header et des six sections, avec un `<main>` sémantique.
 - `src/components/` : Header, navigation et interactions associées.
 - `src/components/Hero.tsx` et `hero.css` : composition éditoriale, sélection des regards et fenêtres de lecture.
 - `src/lib/hero-content.ts` : trois regards éditoriaux, textes et références des images.
@@ -25,6 +25,8 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 - `src/lib/opportunities-content.ts` : catégories et annonces de présentation, indépendantes de l’affichage.
 - `src/components/TrainingSection.tsx` et `training.css` : photographie, six domaines de formation et bloc éditorial.
 - `src/lib/training-content.ts` : domaines permanents et modèle séparé des futures sessions programmées.
+- `src/components/EventsSection.tsx`, `EventCard.tsx` et `events.css` : agenda filtrable, composant `FeaturedEvent` et cartes réutilisables.
+- `src/lib/events-content.ts` : catégories centralisées et événements de présentation ; `event-dates.ts` : validation, affichage français et classement temporel.
 - `src/lib/` : configuration commune des rubriques et des coordonnées.
 - `src/index.css` : identité visuelle, styles responsive et accessibilité.
 - `public/` : fichiers statiques et logo.
@@ -75,6 +77,16 @@ La véritable photographie de prise de parole est une image d’illustration de 
 
 `trainingDomains` reste indépendant de `trainingSessions`. La collection des sessions est vide et le type `TrainingSession` prévoit les domaines associés, le statut, les dates, le fuseau horaire, le format, le lieu et un éventuel lien d’inscription. La future page pourra consommer cette collection après validation d’une programmation réelle, sans modifier les domaines permanents. Aucun calendrier, date ou prix n’est inventé pour cette étape.
 
+## Événements & Agenda
+
+La section `#evenements` suit Formations, avec navigation active depuis le Header et la recherche. Elle affiche au maximum six rendez-vous : un événement à la une, deux cartes secondaires et jusqu’à trois cartes complémentaires. Une sélection contenant un seul événement utilise une composition photographique horizontale sur desktop. Les filtres de période et de catégorie se combinent ; le nombre de résultats est annoncé sans déplacer le focus. Un état vide permet de rétablir tous les événements. Le mode initial « Tous » montre aussi les événements sans date connue.
+
+Les six événements et leurs dates sont des contenus de présentation autorisés par l’utilisateur, signalés par une mention commune. Les dates sont fixes et ne sont jamais décalées automatiquement pour simuler un programme réel. Aucun organisateur ni lien d’inscription réel n’a été fourni : ils restent absents. `MediaEvent` prévoit ces champs optionnels, le lieu et le format en ligne. Seule une URL HTTPS renseignée permet d’afficher une inscription, masquée après la fin de l’événement. `fullAgendaHref` reste `null` : son emplacement affiche « Prochainement » jusqu’à l’implémentation de la page complète.
+
+`EventSchedule` distingue les dates calendaires des instants avec décalage UTC explicite et fuseau IANA. Les dates impossibles, les intervalles inversés, les fuseaux inconnus et les heures sans décalage sont rejetés. Les dates sans heure sont affichées en français sans conversion vers le fuseau du visiteur. Leur date de fin est inclusive, évaluée dans le fuseau de l’événement. Une date future relève de « À venir » ; une fin connue et dépassée relève de « Passés ». Une heure de début dépassée sans fin fiable reste indéterminée. Un événement du jour sans horaires affiche « Aujourd’hui · horaires à préciser » ; une période de plusieurs jours sans heures affiche « Dates annoncées ». « En cours » exige des instants de début et de fin précis. Les états indéterminés restent uniquement dans « Tous ». L’état temporel est recalculé chaque minute et au retour sur l’onglet, sans compte à rebours.
+
+Les six photographies Pexels sont des illustrations, et ne représentent pas des événements revendiqués par Océan. Sources, crédits et licence : `design-assets/events/README.md`. `node scripts/optimize-events-images.mjs` recrée les WebP locaux en 480, 800 et 1200 pixels. Les images utilisent `srcset`, des dimensions explicites et un chargement différé ; les transitions respectent la réduction des mouvements.
+
 ## Vérifier le projet
 
 ```powershell
@@ -83,4 +95,4 @@ npm.cmd run test:e2e
 npm.cmd run build
 ```
 
-Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent le Header et les cinq sections : filtres, fenêtres, navigation active, chargement différé de l’iframe et des images, liens des futures pages, clavier, réduction des mouvements et débordements aux différentes largeurs. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur.
+Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent le Header et les six sections : filtres, fenêtres, navigation active, chargement différé de l’iframe et des images, liens des futures pages, clavier, réduction des mouvements et débordements aux différentes largeurs. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur. Les tests de dates vérifient aussi les limites de minuit, les changements d’heure, les périodes sur plusieurs jours et les données invalides ou absentes.

@@ -5,6 +5,7 @@ import { NewsSection } from './components/NewsSection'
 import { OceanTvSection } from './components/OceanTvSection'
 import { OpportunitiesSection } from './components/OpportunitiesSection'
 import { TrainingSection } from './components/TrainingSection'
+import { EventsSection } from './components/EventsSection'
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <OceanTvSection />
         <OpportunitiesSection />
         <TrainingSection />
+        <EventsSection />
       </main>
     </MotionConfig>
   )
