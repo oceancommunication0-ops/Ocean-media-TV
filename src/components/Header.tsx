@@ -30,11 +30,13 @@ export function Header() {
       setScrolled(window.scrollY > 12)
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
-        const news = document.getElementById('actualites')
-        if (!news) return
         const header = document.querySelector<HTMLElement>('.site-header')
         const threshold = (header?.getBoundingClientRect().height ?? 0) + Math.min(120, window.innerHeight * .18)
-        setActiveHref(news.getBoundingClientRect().top <= threshold ? '#actualites' : '/')
+        const activeSection = ['actualites', 'ocean-tv'].filter(id => {
+          const section = document.getElementById(id)
+          return section && section.getBoundingClientRect().top <= threshold
+        }).at(-1)
+        setActiveHref(activeSection ? `#${activeSection}` : '/')
       })
     }
     onScroll()
