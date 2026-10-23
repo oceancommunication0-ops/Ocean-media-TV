@@ -1,6 +1,6 @@
 # Océan Média TV
 
-Fondations React, TypeScript, Tailwind CSS, Header responsive, Hero éditoriale, Actualités et espace Océan TV. La page d’accueil contient ces trois sections ; les prochaines sections restent à développer.
+Fondations React, TypeScript, Tailwind CSS, Header responsive, Hero éditoriale, Actualités, espace Océan TV et Opportunités. La page d’accueil contient ces quatre sections ; les prochaines sections restent à développer.
 
 ## Démarrer sous Windows
 
@@ -13,7 +13,7 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 
 ## Structure
 
-- `src/App.tsx` : assemblage du Header et des trois sections, avec un `<main>` sémantique.
+- `src/App.tsx` : assemblage du Header et des quatre sections, avec un `<main>` sémantique.
 - `src/components/` : Header, navigation et interactions associées.
 - `src/components/Hero.tsx` et `hero.css` : composition éditoriale, sélection des regards et fenêtres de lecture.
 - `src/lib/hero-content.ts` : trois regards éditoriaux, textes et références des images.
@@ -21,6 +21,8 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 - `src/lib/news-content.ts` : exemples d’articles, catégories et métadonnées à remplacer par les publications validées.
 - `src/components/OceanTvSection.tsx` et `ocean-tv.css` : composition audiovisuelle et lecteur YouTube chargé au clic.
 - `src/lib/tv-content.ts` : sélection des vidéos et métadonnées indépendantes de la présentation.
+- `src/components/OpportunitiesSection.tsx` et `opportunities.css` : catégories interactives et sélection d’annonces.
+- `src/lib/opportunities-content.ts` : catégories et annonces de présentation, indépendantes de l’affichage.
 - `src/lib/` : configuration commune des rubriques et des coordonnées.
 - `src/index.css` : identité visuelle, styles responsive et accessibilité.
 - `public/` : fichiers statiques et logo.
@@ -55,6 +57,14 @@ Les champs `durationSeconds` et `publishedAt` sont optionnels et ne s’affichen
 
 Références d’intégration : [paramètres du lecteur YouTube](https://developers.google.com/youtube/player_parameters) et [mode de confidentialité avancé](https://support.google.com/youtube/answer/171780).
 
+## Opportunités
+
+La section `#opportunites` suit Océan TV. Ses six catégories sont fondées sur le document de présentation : emploi, formations, entrepreneuriat, financements, rencontres professionnelles et innovation. Les boutons filtrent la sélection sans rechargement ; « Tout voir » rétablit les trois annonces initiales. Le nombre de résultats et la catégorie sont annoncés aux lecteurs d’écran, les filtres conservent le focus et les animations respectent la réduction des mouvements.
+
+Les six annonces sont des contenus de présentation autorisés par l’utilisateur, avec un signalement unique au bas de la section. Elles n’engagent aucune organisation réelle et aucune échéance n’est inventée. Pour intégrer les annonces validées, remplacer les entrées de `opportunities` dans `src/lib/opportunities-content.ts` ; `deadline` est optionnel et s’affiche uniquement lorsqu’une date valide est renseignée.
+
+Les cartes préparent les futures URL `/opportunites/<annonce>`, tandis que « Toutes les opportunités » mène à `/opportunites`. Ces pages seront développées ultérieurement : les clics donnent pour le moment un retour discret sans charger de route inexistante. La navigation principale et la recherche mènent à la section ; l’état actif suit le défilement, y compris sur mobile.
+
 ## Vérifier le projet
 
 ```powershell
@@ -63,4 +73,4 @@ npm.cmd run test:e2e
 npm.cmd run build
 ```
 
-Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent le Header, la Hero, les Actualités et Océan TV : filtres, fenêtres, navigation active, chargement différé de l’iframe, clavier, réduction des mouvements et débordements aux différentes largeurs. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur.
+Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent le Header et les quatre sections : filtres, fenêtres, navigation active, chargement différé de l’iframe, liens des futures pages, clavier, réduction des mouvements et débordements aux différentes largeurs. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur.
