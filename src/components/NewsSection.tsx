@@ -22,10 +22,10 @@ function ArticleMeta({ article }: { article: NewsArticle }) {
   )
 }
 
-function ArticleCard({ article, featured, onUnavailable }: { article: NewsArticle; featured?: boolean; onUnavailable: (event: MouseEvent<HTMLAnchorElement>, label: string) => void }) {
+function ArticleCard({ article, featured }: { article: NewsArticle; featured?: boolean }) {
   return (
     <article className={`news-card${featured ? ' news-card-featured' : ''}`}>
-      <a className="news-card-link" href={article.href} aria-label={article.title} onClick={event => onUnavailable(event, `La page « ${article.title} » sera bientôt disponible.`)}>
+      <a className="news-card-link" href={article.href} aria-label={article.title}>
         <div className="news-card-image-wrap">
           <img
             className="news-card-image"
@@ -97,8 +97,8 @@ export function NewsSection() {
         </div>
 
         <div className={`news-grid${visible.length < 4 ? ' news-grid-filtered' : ''}`}>
-          {visible[0] && <ArticleCard article={visible[0]} featured onUnavailable={holdFutureLink} />}
-          {visible.length > 1 && <div className="news-secondary-list">{visible.slice(1).map(article => <ArticleCard key={article.id} article={article} onUnavailable={holdFutureLink} />)}</div>}
+          {visible[0] && <ArticleCard article={visible[0]} featured />}
+          {visible.length > 1 && <div className="news-secondary-list">{visible.slice(1).map(article => <ArticleCard key={article.id} article={article} />)}</div>}
         </div>
 
         <div className="news-bottom-line">

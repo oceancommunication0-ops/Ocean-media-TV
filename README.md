@@ -19,6 +19,8 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 - `src/lib/hero-content.ts` : trois regards éditoriaux, textes et références des images.
 - `src/components/NewsSection.tsx` et `news.css` : sélection d’articles, filtres thématiques et liens préparés pour les futures pages éditoriales.
 - `src/lib/news-content.ts` : exemples d’articles, catégories et métadonnées à remplacer par les publications validées.
+- `src/components/ArticlePage.tsx` et `article-page.css` : gabarit complet de lecture, progression, partage, impression, synthèse et recommandations.
+- `src/lib/article-content.ts` : titres de sections, citations, points essentiels et visuels complémentaires de chaque article.
 - `src/components/OceanTvSection.tsx` et `ocean-tv.css` : composition audiovisuelle et lecteur YouTube chargé au clic.
 - `src/lib/tv-content.ts` : sélection des vidéos et métadonnées indépendantes de la présentation.
 - `src/components/OpportunitiesSection.tsx` et `opportunities.css` : catégories interactives et sélection d’annonces.
@@ -50,7 +52,9 @@ Les textes de la Hero sont fondés sur le document de présentation fourni, sans
 
 Les six contenus éditoriaux générés représentent le rendu final attendu : rubrique, format, auteur, date, temps de lecture, extrait et photographie. Quatre publications sont affichées sur l’accueil ; les filtres présentent les contenus associés sans rechargement.
 
-L’entrée Actualités du Header et de la recherche mène à `#actualites`, avec fermeture du menu, déplacement du focus et état actif lié à la section visible. Les cartes pointent vers leurs futures URL `/actualites/<article>` et le bouton final vers `/actualites`. Tant que ces pages ne sont pas développées, une notification discrète évite de charger une route inexistante. Aucun lecteur en fenêtre n’est utilisé.
+L’entrée Actualités du Header et de la recherche mène à `#actualites`, avec fermeture du menu, déplacement du focus et état actif lié à la section visible. Les six cartes ouvrent désormais leur page `/actualites/<article>`. Le bouton final vers `/actualites` reste en attente de la future page d’index et affiche une notification discrète. Aucun lecteur en fenêtre n’est utilisé.
+
+Chaque page Article utilise un en-tête éditorial grand format, un chapô, les informations de publication, une photographie d’ouverture, une lecture structurée, une citation, un second visuel, un encadré « À retenir », des actions de copie, WhatsApp et impression, une signature de la rédaction et trois recommandations. Une barre indique la progression de lecture. Le Header marque Actualités comme rubrique active et les liens vers l’accueil restaurent l’ancre et le focus. Les images complémentaires et les recommandations sont chargées progressivement.
 
 Pour intégrer les publications validées, remplacer les entrées de `newsArticles` dans `src/lib/news-content.ts`, renseigner `publishedAt` au format ISO et remplacer les visuels par les photographies autorisées. Les textes et métadonnées restent indépendants de la présentation. Les originaux des nouveaux visuels et leurs indications de provenance sont dans `design-assets/news/` ; `node scripts/optimize-news-images.mjs` recrée leurs variantes WebP.
 
@@ -108,4 +112,4 @@ npm.cmd run test:e2e
 npm.cmd run build
 ```
 
-Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent l’accueil complet : filtres, fenêtres, navigation active, chargement différé de l’iframe et des images, liens des futures pages, clavier, réduction des mouvements et débordements aux différentes largeurs. Ils vérifient aussi les liens du footer, les informations et crédits, les coordonnées et l’absence de liens vers la section retirée. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur. Les tests de dates vérifient les limites de minuit, les changements d’heure, les périodes sur plusieurs jours et les données invalides ou absentes.
+Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent l’accueil complet et les pages de lecture : filtres, fenêtres, navigation active, progression de l’article, partage, chargement différé de l’iframe et des images, clavier, réduction des mouvements et débordements aux différentes largeurs. Ils vérifient aussi les liens du footer, les informations et crédits, les coordonnées et l’absence de liens vers la section retirée. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur. Les tests de dates vérifient les limites de minuit, les changements d’heure, les périodes sur plusieurs jours et les données invalides ou absentes.

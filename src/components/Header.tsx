@@ -17,7 +17,9 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [query, setQuery] = useState('')
   const [notice, setNotice] = useState('')
-  const [activeHref, setActiveHref] = useState('/')
+  const articlePath = window.location.pathname.startsWith('/actualites/')
+  const homePage = window.location.pathname === '/'
+  const [activeHref, setActiveHref] = useState(articlePath ? '#actualites' : '/')
   const returnFocus = useRef<HTMLElement | null>(null)
   const pendingSection = useRef<string | null>(null)
   const searchInput = useRef<HTMLInputElement>(null)
@@ -28,6 +30,10 @@ export function Header() {
     let frame = 0
     const onScroll = () => {
       setScrolled(window.scrollY > 12)
+      if (!homePage) {
+        setActiveHref(articlePath ? '#actualites' : '/')
+        return
+      }
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
         const header = document.querySelector<HTMLElement>('.site-header')
@@ -47,7 +53,7 @@ export function Header() {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onScroll)
     }
-  }, [])
+  }, [articlePath, homePage])
 
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 1280px)')
@@ -90,6 +96,10 @@ export function Header() {
     // Les pages internes seront connectées au routeur à la prochaine étape.
     event.preventDefault()
     setPanel(null)
+    if (item.available && !homePage) {
+      window.location.assign(item.href.startsWith('#') ? `/${item.href}` : item.href)
+      return
+    }
     if (item.href.startsWith('#')) {
       const id = item.href.slice(1)
       if (panel) pendingSection.current = id
@@ -128,7 +138,7 @@ export function Header() {
             <ul>
               {navigation.map(item => (
                 <li key={item.href}>
-                  <a className={`navigation-link${item.href === activeHref ? ' is-active' : ''}`} href={item.href} aria-current={item.href === activeHref ? 'page' : undefined} onClick={event => navigate(event, item)}>{item.label}</a>
+                  <a className={`navigation-link${item.href === activeHref ? ' is-active' : ''}`} href={!homePage && item.href.startsWith('#') ? `/${item.href}` : item.href} aria-current={item.href === activeHref ? 'page' : undefined} onClick={event => navigate(event, item)}>{item.label}</a>
                 </li>
               ))}
             </ul>
@@ -177,7 +187,7 @@ export function Header() {
                       <Dialog.Title className="sr-only">Menu principal</Dialog.Title>
                       <Dialog.Description className="sr-only">Explorez les rubriques d’Océan Média TV.</Dialog.Description>
                       <nav className="mobile-navigation" aria-label="Navigation mobile"><ul>{navigation.map((item, index) => (
-                        <li key={item.href}><a href={item.href} className={`mobile-navigation-link${item.href === activeHref ? ' is-active' : ''}`} aria-current={item.href === activeHref ? 'page' : undefined} onClick={event => navigate(event, item)}><span className="mobile-nav-index">0{index + 1}</span><span>{item.label}</span>{item.href === activeHref ? <span className="active-dot" aria-hidden="true" /> : <ArrowUpRight size={17} strokeWidth={1.5} aria-hidden="true" />}</a></li>
+                        <li key={item.href}><a href={!homePage && item.href.startsWith('#') ? `/${item.href}` : item.href} className={`mobile-navigation-link${item.href === activeHref ? ' is-active' : ''}`} aria-current={item.href === activeHref ? 'page' : undefined} onClick={event => navigate(event, item)}><span className="mobile-nav-index">0{index + 1}</span><span>{item.label}</span>{item.href === activeHref ? <span className="active-dot" aria-hidden="true" /> : <ArrowUpRight size={17} strokeWidth={1.5} aria-hidden="true" />}</a></li>
                       ))}</ul></nav>
                       <div className="mobile-menu-bottom">
                         <button type="button" className="mobile-contact-button" onClick={() => setPanel('contact')}>Parlons de vos projets <ArrowUpRight size={19} aria-hidden="true" /></button>
@@ -197,7 +207,7 @@ export function Header() {
                             <div className="search-field"><Search size={20} aria-hidden="true" /><input ref={searchInput} id="site-search" type="search" placeholder="Actualités, formations, opportunités…" value={query} onChange={event => setQuery(event.target.value)} autoComplete="off" /></div>
                           </form>
                           <p className="search-results-label" role="status" aria-live="polite">{query ? `${results.length} rubrique${results.length > 1 ? 's' : ''} correspondante${results.length > 1 ? 's' : ''}` : 'NOS RUBRIQUES'}</p>
-                          <ul className="search-results">{results.map(item => <li key={item.href}><a href={item.href} onClick={event => navigate(event, item)}><span>{item.label}</span>{item.available ? <ArrowRight size={16} aria-hidden="true" /> : <span className="coming-soon">À venir <ArrowUpRight size={14} aria-hidden="true" /></span>}</a></li>)}</ul>
+                          <ul className="search-results">{results.map(item => <li key={item.href}><a href={!homePage && item.href.startsWith('#') ? `/${item.href}` : item.href} onClick={event => navigate(event, item)}><span>{item.label}</span>{item.available ? <ArrowRight size={16} aria-hidden="true" /> : <span className="coming-soon">À venir <ArrowUpRight size={14} aria-hidden="true" /></span>}</a></li>)}</ul>
                           {results.length === 0 && <p className="empty-search">Aucune rubrique ne correspond à « {query} ».</p>}
                           <p className="search-footnote">Les pages détaillées des articles et vidéos seront disponibles prochainement.</p>
                         </>

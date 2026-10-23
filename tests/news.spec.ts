@@ -73,14 +73,14 @@ test('Voir toutes les actualités prépare la future page sans ajouter de cartes
   await expect(section.getByRole('status')).toContainText('La page de toutes les actualités sera bientôt disponible.')
 })
 
-test('un article prépare sa future URL sans ouvrir de fenêtre de lecture', async ({ page }) => {
+test('un article ouvre sa page complète de lecture', async ({ page }) => {
   const section = news(page)
   const article = section.getByRole('link', { name: firstTitle, exact: true })
   await article.click()
-  await expect(page).toHaveURL('/')
-  await expect(section.getByRole('status')).toContainText(firstTitle)
+  await expect(page).toHaveURL('/actualites/entreprendre-ici')
+  await expect(page.getByRole('main', { name: `Article : ${firstTitle}` })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: firstTitle, exact: true })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden')
 })
 
 test('la navigation active Actualités dans sa section puis réactive Accueil en haut', async ({ page }) => {
@@ -153,7 +153,8 @@ test.describe('Actualités et réduction des mouvements', () => {
     const article = news(page).getByRole('link', { name: formationTitle, exact: true })
     await article.focus()
     await page.keyboard.press('Enter')
-    await expect(news(page).getByRole('status')).toContainText(formationTitle)
+    await expect(page).toHaveURL('/actualites/prendre-la-parole')
+    await expect(page.getByRole('heading', { level: 1, name: formationTitle, exact: true })).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
   })
 })
