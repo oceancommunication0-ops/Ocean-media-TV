@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/')
 })
 
-test('desktop : identité, navigation active et six sections dans la zone principale', async ({ page }, testInfo) => {
+test('desktop : identité, navigation active, huit sections et footer', async ({ page }, testInfo) => {
   await expect(page).toHaveTitle(/Océan Média TV/)
   await expect(page.locator('html')).toHaveAttribute('lang', 'fr')
   await expect(page.locator('.signature')).toHaveText('INFORMER • FORMER • INSPIRER')
@@ -22,20 +22,18 @@ test('desktop : identité, navigation active et six sections dans la zone princi
   const hero = main.getByRole('region', { name: 'L’info qui ouvre les horizons.', exact: true })
   await expect(hero).toHaveAttribute('aria-labelledby', 'hero-title')
   await expect(main.getByRole('heading', { level: 1 })).toHaveText('L’info qui ouvre les horizons.')
-  await expect(main.locator(':scope > section')).toHaveCount(6)
-  await expect(page.getByRole('contentinfo')).toHaveCount(0)
+  await expect(main.locator(':scope > section')).toHaveCount(8)
+  await expect(page.getByRole('contentinfo')).toHaveCount(1)
   await page.screenshot({ path: testInfo.outputPath('desktop.png'), fullPage: true })
 })
 
-test('les futures rubriques donnent un retour sans naviguer', async ({ page }) => {
-  const initialUrl = page.url()
+test('À propos rejoint la présentation institutionnelle et devient actif', async ({ page }) => {
   const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
   await navigation.getByRole('link', { name: 'À propos', exact: true }).click()
 
-  await expect(page.locator('.notification-region')).toContainText('La rubrique « À propos » sera bientôt disponible.')
-  await expect(page).toHaveURL(initialUrl)
-  await expect(navigation.getByRole('link', { name: 'Accueil', exact: true })).toHaveAttribute('aria-current', 'page')
-  await page.getByRole('button', { name: 'Fermer la notification', exact: true }).click()
+  await expect(page).toHaveURL(/#ocean-communication$/)
+  await expect(page.locator('#ocean-communication')).toBeFocused()
+  await expect(navigation.getByRole('link', { name: 'À propos', exact: true })).toHaveAttribute('aria-current', 'page')
   await expect(page.locator('.notification')).toHaveCount(0)
 })
 
@@ -61,14 +59,13 @@ test('recherche : filtre sans accents, aucun résultat, Échap et retour du focu
 })
 
 test('la sélection d’une rubrique dans la recherche ferme le dialogue', async ({ page }) => {
-  const initialUrl = page.url()
   await page.getByRole('button', { name: 'Ouvrir la recherche', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Que recherchez-vous ?' })
   await dialog.getByRole('searchbox').fill('propos')
   await dialog.getByRole('link', { name: /À propos/ }).click()
   await expect(dialog).toHaveCount(0)
-  await expect(page.locator('.notification-region')).toContainText('À propos')
-  await expect(page).toHaveURL(initialUrl)
+  await expect(page.locator('#ocean-communication')).toBeFocused()
+  await expect(page).toHaveURL(/#ocean-communication$/)
 })
 
 test('le contact fournit les coordonnées réelles du document', async ({ page }) => {
@@ -87,7 +84,7 @@ test('le contact fournit les coordonnées réelles du document', async ({ page }
 })
 
 test('les réseaux sans profil officiel restent honnêtes et interactifs', async ({ page }) => {
-  await page.getByRole('button', { name: 'Facebook — lien officiel à venir', exact: true }).click()
+  await page.locator('header').getByRole('button', { name: 'Facebook — lien officiel à venir', exact: true }).click()
   await expect(page.locator('.notification-region')).toContainText('Le lien officiel Facebook sera bientôt disponible.')
   await expect(page).toHaveURL('/')
 })
@@ -134,9 +131,8 @@ test.describe('mobile', () => {
     const dialog = page.getByRole('dialog', { name: 'Menu principal' })
     await dialog.getByRole('link', { name: /À propos/ }).click()
     await expect(dialog).toHaveCount(0)
-    await expect(page.locator('.notification-region')).toContainText('À propos')
-    await expect(page).toHaveURL('/')
-    await expect(page.getByRole('button', { name: 'Ouvrir le menu', exact: true })).toBeFocused()
+    await expect(page).toHaveURL(/#ocean-communication$/)
+    await expect(page.locator('#ocean-communication')).toBeFocused()
   })
 
   test('le contact depuis le menu reçoit le focus puis le rend au hamburger', async ({ page }) => {

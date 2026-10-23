@@ -29,7 +29,7 @@ test('Océan TV suit les Actualités et présente sept vidéos sans lecteur char
   await expect(section).toHaveAttribute('id', 'ocean-tv')
   await expect(section).toHaveAttribute('aria-labelledby', 'tv-title')
   await expect(section.getByRole('heading', { level: 2, name: 'Océan TV', exact: true })).toBeVisible()
-  await expect(page.locator('main > section')).toHaveCount(6)
+  await expect(page.locator('main > section')).toHaveCount(8)
   expect(await page.locator('main > section').nth(2).getAttribute('id')).toBe('ocean-tv')
   await expect(section.getByRole('article')).toHaveCount(7)
   await expect(section.getByRole('button')).toHaveCount(7)

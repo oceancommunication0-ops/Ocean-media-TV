@@ -1,6 +1,6 @@
 # Océan Média TV
 
-Fondations React, TypeScript, Tailwind CSS, Header responsive, Hero éditoriale, Actualités, espace Océan TV, Opportunités, Formations et Événements & Agenda. La page d’accueil contient ces six sections ; les prochaines sections restent à développer.
+Page d’accueil complète d’Océan Média TV : Header, Hero éditoriale, Actualités, Océan TV, Opportunités, Formations, Événements & Agenda, Initiatives et portraits, Océan Communication et partenaires, puis Footer. Réalisée avec React, TypeScript, Tailwind CSS, Framer Motion et Lucide.
 
 ## Démarrer sous Windows
 
@@ -13,7 +13,7 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 
 ## Structure
 
-- `src/App.tsx` : assemblage du Header et des six sections, avec un `<main>` sémantique.
+- `src/App.tsx` : assemblage du Header, des huit sections du `<main>` et du Footer.
 - `src/components/` : Header, navigation et interactions associées.
 - `src/components/Hero.tsx` et `hero.css` : composition éditoriale, sélection des regards et fenêtres de lecture.
 - `src/lib/hero-content.ts` : trois regards éditoriaux, textes et références des images.
@@ -27,6 +27,9 @@ Créer la version de production avec `npm.cmd run build`, puis la consulter avec
 - `src/lib/training-content.ts` : domaines permanents et modèle séparé des futures sessions programmées.
 - `src/components/EventsSection.tsx`, `EventCard.tsx` et `events.css` : agenda filtrable, composant `FeaturedEvent` et cartes réutilisables.
 - `src/lib/events-content.ts` : catégories centralisées et événements de présentation ; `event-dates.ts` : validation, affichage français et classement temporel.
+- `src/components/PortraitsSection.tsx`, `CommunicationSection.tsx`, `Footer.tsx` et `closing.css` : fin éditoriale et institutionnelle de l’accueil.
+- `src/lib/closing-content.ts` : récits de présentation et collection des partenaires confirmés, vide en l’absence de données validées.
+- `src/lib/home-navigation.ts` : navigation interne du footer avec gestion du focus et de la réduction des mouvements.
 - `src/lib/` : configuration commune des rubriques et des coordonnées.
 - `src/index.css` : identité visuelle, styles responsive et accessibilité.
 - `public/` : fichiers statiques et logo.
@@ -87,6 +90,18 @@ Les six événements et leurs dates sont des contenus de présentation autorisé
 
 Les six photographies Pexels sont des illustrations, et ne représentent pas des événements revendiqués par Océan. Sources, crédits et licence : `design-assets/events/README.md`. `node scripts/optimize-events-images.mjs` recrée les WebP locaux en 480, 800 et 1200 pixels. Les images utilisent `srcset`, des dimensions explicites et un chargement différé ; les transitions respectent la réduction des mouvements.
 
+## Portraits, Océan Communication et Footer
+
+La section `#portraits` présente trois récits de démonstration dans une composition photographique de magazine. Les récits n’attribuent ni identité, ni témoignage, ni résultat réel aux personnes photographiées. Une seule mention indique leur statut de présentation. Les liens `/portraits/<id>` préparent les futures pages et affichent actuellement un retour discret sans charger de route absente ou de lecteur en fenêtre. Remplacer `inspiringStories` par les reportages et photographies validés lors de leur publication.
+
+`#ocean-communication` présente la structure à l’origine du média, ses trois missions (former, informer, accompagner) et la signature distincte d’Océan Média TV. « À propos » dans le Header et la recherche rejoint cette section avec gestion du focus et état actif au défilement. La rubrique de portraits n’active aucune rubrique sans lien correspondant dans le Header.
+
+Le bloc `#partenaires` invite à une collaboration via le numéro WhatsApp du document, avec un message prérempli que le visiteur choisit lui-même d’envoyer. Aucune organisation n’est présentée comme partenaire sans confirmation. `confirmedPartners` peut recevoir ultérieurement les noms, logos autorisés et sites officiels.
+
+Le footer contient des liens fonctionnels vers les rubriques et les partenaires, le téléphone et WhatsApp existants, l’adresse fournie, les réseaux officiels en attente et un retour en haut qui restaure le focus sur le contenu principal. Il ne contient aucun formulaire sans service d’envoi. « Informations & crédits » ouvre un dialogue accessible avec les sources des photographies et une explication des contenus de présentation et des services externes ; il gère Échap, le focus et le blocage du défilement. Les métadonnées de partage et une favicon complètent les finitions.
+
+Les nouvelles photographies de stock, distinctes des membres ou activités d’Océan, sont diffusées localement en WebP avec `srcset`, dimensions explicites et chargement différé. Sources et crédits : `design-assets/finale/README.md`. Reproduction : `node scripts/optimize-finale-images.mjs`.
+
 ## Vérifier le projet
 
 ```powershell
@@ -95,4 +110,4 @@ npm.cmd run test:e2e
 npm.cmd run build
 ```
 
-Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent le Header et les six sections : filtres, fenêtres, navigation active, chargement différé de l’iframe et des images, liens des futures pages, clavier, réduction des mouvements et débordements aux différentes largeurs. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur. Les tests de dates vérifient aussi les limites de minuit, les changements d’heure, les périodes sur plusieurs jours et les données invalides ou absentes.
+Les tests Playwright utilisent Microsoft Edge installé sous Windows. Ils couvrent l’accueil complet : filtres, fenêtres, navigation active, chargement différé de l’iframe et des images, liens des futures pages, clavier, réduction des mouvements et débordements aux différentes largeurs. Ils vérifient aussi les liens du footer, les informations et crédits, les coordonnées et l’absence de partenaires inventés. Les requêtes au lecteur YouTube sont simulées dans les tests pour vérifier le frontend sans dépendre du réseau du fournisseur. Les tests de dates vérifient les limites de minuit, les changements d’heure, les périodes sur plusieurs jours et les données invalides ou absentes.
