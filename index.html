@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#071C35" />
     <link rel="icon" type="image/svg+xml" href="/brand/ocean-favicon.svg" />
+    <link rel="stylesheet" href="/initial-loader.css" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="fr_CD" />
     <meta property="og:title" content="Océan Média TV — Informer · Former · Inspirer" />
     <meta property="og:description" content="L’information qui rapproche les opportunités de la jeunesse. Actualités, vidéos, formations et parcours inspirants." />
-    <link rel="preload" as="image" href="/images/hero-voices.webp" imagesrcset="/images/hero-voices-768.webp 768w, /images/hero-voices-1280.webp 1280w, /images/hero-voices.webp 1536w" imagesizes="(max-width: 899px) calc(100vw - 44px), 50vw" fetchpriority="high" />
     <meta
       name="description"
       content="Océan Média TV — Informer, former, inspirer. L'information qui rapproche les opportunités de la jeunesse."
@@ -17,7 +17,8 @@
     <title>Océan Média TV — Informer · Former · Inspirer</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><main class="initial-loader" role="status" aria-label="Chargement d’Océan Média TV" aria-busy="true"><div class="initial-loader-brand" aria-hidden="true"><span class="initial-loader-mark"><img src="/brand/ocean-media-original.png" alt="" width="1534" height="1025" /></span><span><strong>OCÉAN<span>.</span></strong><small>MÉDIA <span>TV</span></small></span></div><div class="initial-loader-lines" aria-hidden="true"><span></span><span></span><span></span></div></main></div>
+    <script src="/initial-loader.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

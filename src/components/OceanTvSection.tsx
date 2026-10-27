@@ -1,8 +1,9 @@
+import { AppLink } from './AppLink'
 import { useRef, useState } from 'react'
-import * as Dialog from '@radix-ui/react-dialog'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ArrowUpRight, Film, Play, X } from 'lucide-react'
-import { formatVideoDuration, videoItems, youtubeEmbedUrl, type VideoItem } from '../lib/tv-content'
+import { ArrowRight, ArrowUpRight, Play, SlidersHorizontal } from 'lucide-react'
+import { formatVideoDuration, type VideoItem } from '../lib/tv-content'
+import { LoadState, useCollection, useSite } from '../lib/api'
+import { VideoPlayerDialog } from './VideoPlayerDialog'
 import './ocean-tv.css'
 
 function VideoCard({ video, variant, index, onSelect }: { video: VideoItem; variant: 'featured' | 'side' | 'additional'; index?: number; onSelect: (video: VideoItem, trigger: HTMLElement) => void }) {
@@ -20,7 +21,7 @@ function VideoCard({ video, variant, index, onSelect }: { video: VideoItem; vari
           {duration && <span className="tv-duration">{duration}</span>}
         </div>
         <div className="tv-card-copy">
-          <div className="tv-category-line"><span className="tv-category">{video.category}</span>{variant === 'side' && <span className="tv-side-index" aria-hidden="true">0{index}</span>}</div>
+          <div className="tv-category-line"><span className="tv-category">{video.categoryLabel ?? video.category}</span>{variant === 'side' && <span className="tv-side-index" aria-hidden="true">0{index}</span>}</div>
           <h3><button type="button" className="tv-select-button" aria-label={`Regarder : ${video.title}`} aria-haspopup="dialog" onClick={event => onSelect(video, event.currentTarget)}>{video.title}</button></h3>
           {variant === 'featured' && <><p className="tv-description">{video.description}</p>{published && <time className="tv-published" dateTime={published}>{new Date(published).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })}</time>}</>}
           {video.channel && <span className="tv-channel">{video.channel}</span>}
@@ -31,11 +32,12 @@ function VideoCard({ video, variant, index, onSelect }: { video: VideoItem; vari
 }
 
 export function OceanTvSection() {
+  const [category, setCategory] = useState('')
+  const categories = useSite().categories.videos
+  const data = useCollection('videos', { category, limit: 4 })
+  const videoItems = data.items
   const [selected, setSelected] = useState<VideoItem | null>(null)
   const returnFocus = useRef<HTMLElement | null>(null)
-  const reducedMotion = useReducedMotion()
-  const embedUrl = selected ? youtubeEmbedUrl(selected.youtubeId) : null
-  const duration = reducedMotion ? 0 : .22
   const select = (video: VideoItem, trigger: HTMLElement) => { returnFocus.current = trigger; setSelected(video) }
 
   return (
@@ -46,32 +48,28 @@ export function OceanTvSection() {
           <p className="tv-introduction">Voir plus loin.<br /><span>Comprendre autrement.</span></p>
         </div>
 
-        <div className="tv-main-grid">
-          <VideoCard video={videoItems[0]} variant="featured" onSelect={select} />
-          <div className="tv-side-selection"><div className="tv-selection-heading"><span>LA SÉLECTION</span><span aria-hidden="true">01 — 03</span></div><div className="tv-side-cards">{videoItems.slice(1, 4).map((video, index) => <VideoCard key={video.id} video={video} variant="side" index={index + 1} onSelect={select} />)}</div></div>
+        <div className="tv-filter-bar">
+          <div className="tv-filter-label"><SlidersHorizontal size={15} aria-hidden="true" /><span>Filtrer</span></div>
+          <div className="tv-filters" role="group" aria-label="Filtrer les vidéos de l’accueil par format">
+            <button type="button" aria-pressed={category === ''} onClick={() => setCategory('')}>Toutes</button>
+            {categories.map(item => <button type="button" key={item.id} aria-pressed={category === item.id} onClick={() => setCategory(item.id)}>{item.label}</button>)}
+          </div>
         </div>
 
-        <div className="tv-more-heading"><h3>Encore un autre regard<span aria-hidden="true">.</span></h3><span>À DÉCOUVRIR AUSSI</span></div>
-        <div className="tv-additional-grid">{videoItems.slice(4, 7).map(video => <VideoCard key={video.id} video={video} variant="additional" onSelect={select} />)}</div>
-        <div className="tv-section-end"><span>DES VOIX. DES IDÉES. DES PERSPECTIVES.</span><span aria-hidden="true"><Film size={14} strokeWidth={1.5} />OCÉAN MÉDIA TV</span></div>
+        <LoadState {...data} variant="list" count={4} />
+        {!data.loading && !data.error && videoItems.length === 0 && <p className="api-state">Les vidéos seront disponibles prochainement.</p>}
+        {videoItems[0] && <div className="tv-main-grid">
+          <VideoCard video={videoItems[0]} variant="featured" onSelect={select} />
+          <div className="tv-side-selection"><div className="tv-selection-heading"><span>LA SÉLECTION</span><span aria-hidden="true">01 — 03</span></div><div className="tv-side-cards">{videoItems.slice(1, 4).map((video, index) => <VideoCard key={video.id} video={video} variant="side" index={index + 1} onSelect={select} />)}</div></div>
+        </div>}
+
+        <div className="tv-explore">
+          <div><span>LA VIDÉOTHÈQUE</span><p>Reportages, entretiens, émissions et regards inspirants réunis dans un même espace.</p></div>
+          <AppLink href="/ocean-tv">Explorer toutes les vidéos <ArrowRight size={17} strokeWidth={1.7} aria-hidden="true" /></AppLink>
+        </div>
       </div>
 
-      <Dialog.Root open={selected !== null} onOpenChange={open => { if (!open) setSelected(null) }}>
-        <AnimatePresence>
-          {selected && <Dialog.Portal forceMount>
-            <Dialog.Overlay forceMount asChild><motion.div className="tv-player-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration }} /></Dialog.Overlay>
-            <Dialog.Content forceMount asChild onCloseAutoFocus={event => { event.preventDefault(); returnFocus.current?.focus({ preventScroll: true }) }}>
-              <motion.div className="tv-player-dialog" initial={{ opacity: 0, y: reducedMotion ? 0 : 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reducedMotion ? 0 : 8 }} transition={{ duration }}>
-                <div className="tv-player-toolbar"><span>OCÉAN TV <span aria-hidden="true">/</span> {selected.category}</span><Dialog.Close className="tv-player-close" aria-label="Fermer la vidéo"><X size={22} strokeWidth={1.6} aria-hidden="true" /></Dialog.Close></div>
-                <div className="tv-player-screen">
-                  {embedUrl ? <iframe key={embedUrl} src={embedUrl} title={`Lecteur YouTube : ${selected.title}`} width={1280} height={720} allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /> : <div className="tv-player-unavailable"><Film size={32} strokeWidth={1.3} aria-hidden="true" /><p>Vidéo à venir</p><span>Retrouvez prochainement ce contenu sur Océan TV.</span></div>}
-                </div>
-                <div className="tv-player-caption"><Dialog.Title>{selected.title}</Dialog.Title><Dialog.Description>{selected.description || 'Une vidéo de la sélection Océan TV.'}</Dialog.Description>{embedUrl && <a href={`https://www.youtube.com/watch?v=${selected.youtubeId}`} target="_blank" rel="noopener noreferrer">Ouvrir sur YouTube <ArrowUpRight size={15} aria-hidden="true" /><span className="sr-only"> — nouvel onglet</span></a>}</div>
-              </motion.div>
-            </Dialog.Content>
-          </Dialog.Portal>}
-        </AnimatePresence>
-      </Dialog.Root>
+      <VideoPlayerDialog video={selected} onClose={() => setSelected(null)} returnFocus={returnFocus} />
     </section>
   )
 }

@@ -5,17 +5,6 @@ const formationTitle = 'Prendre la parole, prendre sa place.'
 const news = (page: Page) => page.getByRole('region', { name: 'Actualités', exact: true })
 const filters = (page: Page) => news(page).getByRole('group', { name: 'Filtrer les actualités', exact: true })
 
-async function expectNewsAnchor(page: Page) {
-  await expect(page).toHaveURL(/#actualites$/)
-  await expect(news(page)).toBeInViewport()
-  await expect.poll(async () => {
-    const sectionTop = await news(page).evaluate(element => element.getBoundingClientRect().top)
-    const headerBottom = await page.locator('header').evaluate(element => element.getBoundingClientRect().bottom)
-    return sectionTop >= headerBottom - 1
-  }).toBe(true)
-  await expect(page.locator('.notification')).toHaveCount(0)
-}
-
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
 })
@@ -26,7 +15,7 @@ test('Actualités suit la Hero et présente quatre publications finalisées', as
   await expect(section).toHaveAttribute('id', 'actualites')
   await expect(section).toHaveAttribute('aria-labelledby', 'news-title')
   await expect(section.getByRole('heading', { level: 2, name: 'Actualités', exact: true })).toBeVisible()
-  await expect(page.locator('main > section')).toHaveCount(7)
+  await expect(page.locator('main > section')).toHaveCount(6)
   expect(await page.locator('main > section').nth(1).getAttribute('id')).toBe('actualites')
   await expect(section.getByText(/Exemple éditorial|Contenus de démonstration|Article de démonstration/i)).toHaveCount(0)
   await expect(section.getByRole('article')).toHaveCount(4)
@@ -63,14 +52,14 @@ test('les filtres actualisent les cartes et exposent leur état', async ({ page 
   await expect(section.getByRole('article')).toHaveCount(4)
 })
 
-test('Voir toutes les actualités prépare la future page sans ajouter de cartes', async ({ page }) => {
+test('Voir toutes les actualités ouvre la page éditoriale dédiée', async ({ page }) => {
   const section = news(page)
   const allNews = section.getByRole('link', { name: 'Voir toutes les actualités', exact: true })
   await expect(allNews).toHaveAttribute('href', '/actualites')
   await allNews.click()
-  await expect(section.getByRole('article')).toHaveCount(4)
-  await expect(page).toHaveURL('/')
-  await expect(section.getByRole('status')).toContainText('La page de toutes les actualités sera bientôt disponible.')
+  await expect(page).toHaveURL('/actualites')
+  await expect(page.getByRole('main', { name: 'Page des actualités', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: /Actualités.*Idées & perspectives/ })).toBeVisible()
 })
 
 test('un article ouvre sa page complète de lecture', async ({ page }) => {
@@ -83,20 +72,15 @@ test('un article ouvre sa page complète de lecture', async ({ page }) => {
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
-test('la navigation active Actualités dans sa section puis réactive Accueil en haut', async ({ page }) => {
+test('la navigation ouvre directement la page Actualités et active la rubrique', async ({ page }) => {
   const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
-  const home = navigation.getByRole('link', { name: 'Accueil', exact: true })
   const link = navigation.getByRole('link', { name: 'Actualités', exact: true })
-  await expect(link).toHaveAttribute('href', '#actualites')
+  await expect(link).toHaveAttribute('href', '/actualites')
   await link.click()
-  await expectNewsAnchor(page)
-  await expect(link).toHaveAttribute('aria-current', 'page')
-  await expect(link).toHaveClass(/is-active/)
-  await expect(home).not.toHaveAttribute('aria-current')
-  await home.click()
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(5)
-  await expect(home).toHaveAttribute('aria-current', 'page')
-  await expect(link).not.toHaveAttribute('aria-current')
+  await expect(page).toHaveURL('/actualites')
+  const pageNavigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
+  await expect(pageNavigation.getByRole('link', { name: 'Actualités', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(pageNavigation.getByRole('link', { name: 'Accueil', exact: true })).not.toHaveAttribute('aria-current')
 })
 
 test('la recherche mène à Actualités et ferme le dialogue', async ({ page }) => {
@@ -105,24 +89,41 @@ test('la recherche mène à Actualités et ferme le dialogue', async ({ page }) 
   await search.getByRole('searchbox').fill('actualites')
   await search.getByRole('link', { name: 'Actualités', exact: true }).click()
   await expect(search).toHaveCount(0)
-  await expectNewsAnchor(page)
-  await expect(page.getByRole('navigation', { name: 'Navigation principale', exact: true }).getByRole('link', { name: 'Actualités', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page).toHaveURL('/actualites')
+  const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
+  await expect(navigation.getByRole('link', { name: 'Actualités', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(navigation.getByRole('link', { name: 'Accueil', exact: true })).not.toHaveAttribute('aria-current')
 })
 
 test.describe('Actualités sur mobile', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('le menu mène à Actualités, se ferme et reflète ensuite la section active', async ({ page }) => {
+  test('le menu mène à la page Actualités et active sa rubrique', async ({ page }) => {
     await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click()
     let menu = page.getByRole('dialog', { name: 'Menu principal' })
     await menu.getByRole('link', { name: /Actualités/ }).click()
     await expect(menu).toHaveCount(0)
-    await expectNewsAnchor(page)
+    await expect(page).toHaveURL('/actualites')
     await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click()
     menu = page.getByRole('dialog', { name: 'Menu principal' })
     await expect(menu.getByRole('link', { name: /Actualités/ })).toHaveAttribute('aria-current', 'page')
+    await expect(menu.getByRole('navigation', { name: 'Navigation mobile' }).getByRole('link', { name: /Accueil/ })).not.toHaveAttribute('aria-current')
     await page.keyboard.press('Escape')
   })
+})
+
+test('une seule actualité secondaire conserve son format compact en haut de colonne', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  const section = news(page)
+  await section.getByRole('button', { name: 'Formation', exact: true }).click()
+  const secondary = section.locator('.news-secondary-list .news-card')
+  await expect(secondary).toHaveCount(1)
+  const cardBox = await secondary.boundingBox()
+  const columnBox = await section.locator('.news-secondary-list').boundingBox()
+  expect(cardBox).not.toBeNull()
+  expect(columnBox).not.toBeNull()
+  expect(cardBox!.height).toBeLessThan(220)
+  expect(cardBox!.y).toBeCloseTo(columnBox!.y, 0)
 })
 
 for (const width of [320, 390, 768, 1024, 1440]) {

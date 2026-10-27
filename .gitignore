@@ -1,6 +1,9 @@
 node_modules/
 .npm-cache/
 dist/
+dist-server/
+server/generated/
+storage/
 .sites-runtime/
 test-results/
 playwright-report/

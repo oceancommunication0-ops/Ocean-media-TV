@@ -15,7 +15,7 @@ test('la Hero présente son identité et des images locales chargées', async ({
   const hero = page.getByRole('region', { name: heroTitle, exact: true })
   await expect(hero).toBeVisible()
   await expect(hero.getByRole('heading', { level: 1 })).toHaveText(heroTitle)
-  await expect(hero.getByRole('button', { name: 'Explorer nos regards', exact: true })).toBeVisible()
+  await expect(hero.getByRole('button', { name: 'Découvrir les actualités', exact: true })).toBeVisible()
   await expect(hero.getByRole('button', { name: 'L’esprit Océan', exact: true })).toHaveCount(0)
   await expect(hero).not.toContainText('Une initiative d’Océan Communication')
   await expect(hero).not.toContainText('Les idées nous relient.')
@@ -71,14 +71,12 @@ test('les regards se sélectionnent au clavier avec un seul tab actif', async ({
   await expect.poll(() => hero.evaluate(element => element.contains(document.activeElement))).toBe(false)
 })
 
-test('Explorer nos regards ramène au premier regard et lui donne le focus', async ({ page }) => {
-  const hero = page.getByRole('region', { name: heroTitle, exact: true })
-  await hero.getByRole('tab', { name: features[2].tab, exact: true }).click()
-  await hero.getByRole('button', { name: 'Explorer nos regards', exact: true }).click()
-  const first = hero.getByRole('tab', { name: features[0].tab, exact: true })
-  await expect(first).toHaveAttribute('aria-selected', 'true')
-  await expect(first).toBeFocused()
-  await expect(first).toBeInViewport()
+test('Découvrir les actualités rejoint la rubrique avec le focus', async ({ page }) => {
+  const trigger = page.getByRole('button', { name: 'Découvrir les actualités', exact: true })
+  await trigger.click()
+  await expect(page.locator('#actualites')).toBeFocused()
+  await expect(page.locator('#news-title')).toBeInViewport()
+  await expect(page.locator('.hero-photo-label, .hero-photo-side-label')).toHaveCount(0)
 })
 
 test('chaque regard affiche sa description sans ouvrir de fenêtre', async ({ page }) => {

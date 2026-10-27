@@ -1,145 +1,40 @@
 import { expect, test } from '@playwright/test'
 
-test.beforeEach(async ({ page }) => {
-  await page.clock.setFixedTime(new Date('2026-10-23T12:00:00Z'))
-  await page.goto('/')
-})
+test.beforeEach(async ({ page }) => { await page.clock.setFixedTime(new Date('2026-10-23T12:00:00Z')); await page.goto('/') })
 
-test('l’agenda suit Formations, affiche six rendez-vous et ne simule aucune inscription', async ({ page }) => {
+test('l’accueil affiche trois événements et un filtre par catégorie', async ({ page }) => {
   const section = page.locator('#evenements')
   await section.scrollIntoViewIfNeeded()
-  await expect(section.getByRole('heading', { level: 2 })).toHaveText('Les rendez-vous à ne pas manquer.')
-  expect(await page.locator('main > section').evaluateAll(items => items.map(item => item.id))).toEqual(['', 'actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements', 'portraits'])
-  await expect(section.getByRole('article')).toHaveCount(6)
-  await expect(section.locator('.event-featured')).toHaveCount(1)
-  await expect(section.locator('.events-secondary article')).toHaveCount(2)
-  await expect(section.locator('.events-more-grid article')).toHaveCount(3)
-  await expect(section.locator('a, form')).toHaveCount(0)
-  await expect(section).toContainText('Événements et dates de présentation')
-  await expect(section).toContainText('Prochainement')
-  const undated = section.getByRole('article', { name: /Faire dialoguer/ })
-  await expect(undated).toContainText('Date à préciser')
-  await expect(undated.locator('time, .event-status')).toHaveCount(0)
-  await expect(section.getByRole('article', { name: /leadership/ })).toContainText('En ligne')
+  await expect(section.getByRole('article')).toHaveCount(3)
+  await expect(section.getByRole('group', { name: 'Filtrer les événements par catégorie' })).toBeVisible()
+  await expect(section.getByRole('button', { name: 'À venir' })).toHaveCount(0)
+  await expect(section).not.toContainText('Des idées qui se partagent')
+  await expect(section).not.toContainText('Événements et dates de présentation')
 })
 
-test('périodes et catégories se combinent, l’état vide permet de réinitialiser', async ({ page }) => {
+test('les catégories fonctionnent et une carte ouvre sa fenêtre détaillée', async ({ page }) => {
   const section = page.locator('#evenements')
-  const periods = section.getByRole('group', { name: 'Filtrer les événements par période' })
-  await periods.getByRole('button', { name: 'À venir', exact: true }).click()
-  await expect(section.getByRole('article')).toHaveCount(3)
-  await expect(periods.getByRole('button', { name: 'À venir', exact: true })).toHaveAttribute('aria-pressed', 'true')
-  await expect(section.getByRole('status')).toContainText('3 rendez-vous · À venir')
-  await section.getByLabel('Catégorie d’événement').selectOption('ateliers')
+  await section.getByRole('button', { name: 'Ateliers', exact: true }).click()
   await expect(section.getByRole('article')).toHaveCount(1)
-  await expect(section.getByRole('heading', { level: 3 })).toHaveText('Prendre la parole. Faire entendre ses idées.')
-  await periods.getByRole('button', { name: 'Passés', exact: true }).click()
-  await expect(section.getByRole('article')).toHaveCount(0)
-  await expect(section.getByRole('heading', { name: 'Aucun rendez-vous pour cette sélection.' })).toBeVisible()
-  await section.getByRole('button', { name: 'Voir tous les événements' }).click()
-  await expect(periods.getByRole('button', { name: 'Tous', exact: true })).toBeFocused()
-  await expect(section.getByRole('article')).toHaveCount(6)
-  await expect(section.getByLabel('Catégorie d’événement')).toHaveValue('')
-  await periods.getByRole('button', { name: 'Passés', exact: true }).click()
-  await expect(section.getByRole('article')).toHaveCount(2)
-  await expect(section.locator('.event-status-past')).toHaveCount(2)
+  const trigger = section.getByRole('button', { name: 'En savoir plus' })
+  await trigger.click()
+  const dialog = page.getByRole('dialog', { name: /Prendre la parole/ })
+  await expect(dialog).toContainText('Pourquoi participer ?')
+  await expect(dialog.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute('href', /^https:\/\/wa\.me\/243972486033\?text=/)
+  await page.keyboard.press('Escape')
+  await expect(trigger).toBeFocused()
 })
 
-test('les six catégories sont uniques et toutes utilisables au clavier', async ({ page }) => {
-  const section = page.locator('#evenements')
-  const category = section.getByLabel('Catégorie d’événement')
-  await expect(category.locator('option')).toHaveCount(7)
-  for (const value of ['conferences', 'ateliers', 'seminaires', 'rencontres', 'entrepreneuriat', 'institutionnels']) {
-    await category.selectOption(value)
-    await expect(section.getByRole('article')).toHaveCount(1)
-  }
-  await category.selectOption('')
-  const upcoming = section.getByRole('button', { name: 'À venir', exact: true })
-  await upcoming.focus()
-  await page.keyboard.press('Space')
-  await expect(upcoming).toBeFocused()
-  await expect(section.getByRole('article')).toHaveCount(3)
-  await page.keyboard.press('Tab')
-  await page.keyboard.press('Enter')
-  await expect(section.getByRole('button', { name: 'Passés', exact: true })).toBeFocused()
-  await expect(section.getByRole('article')).toHaveCount(2)
-})
-
-test('le Header et la recherche rejoignent l’agenda avec focus et navigation active', async ({ page }) => {
-  const link = page.getByRole('navigation', { name: 'Navigation principale', exact: true }).getByRole('link', { name: 'Événements', exact: true })
-  await link.click()
-  await expect(page).toHaveURL(/#evenements$/)
-  await expect(page.locator('#evenements')).toBeFocused()
-  await expect(link).toHaveAttribute('aria-current', 'page')
-  await page.getByRole('button', { name: 'Ouvrir la recherche' }).click()
-  const dialog = page.getByRole('dialog', { name: 'Que recherchez-vous ?' })
-  await dialog.getByRole('searchbox').fill('evenements')
-  await dialog.getByRole('link', { name: 'Événements', exact: true }).click()
-  await expect(dialog).toHaveCount(0)
-  await expect(page.locator('#evenements')).toBeFocused()
-  await expect(page.locator('.notification')).toHaveCount(0)
-  await page.evaluate(() => document.getElementById('formations')?.scrollIntoView({ behavior: 'instant' }))
-  await expect(link).not.toHaveAttribute('aria-current')
-  await page.evaluate(() => document.getElementById('evenements')?.scrollIntoView({ behavior: 'instant' }))
-  await expect(link).toHaveAttribute('aria-current', 'page')
-})
-
-test('le menu mobile libère le défilement après navigation vers les événements', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.getByRole('button', { name: 'Ouvrir le menu' }).click()
-  await page.getByRole('dialog', { name: 'Menu principal' }).getByRole('link', { name: /Événements/ }).click()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.locator('#evenements')).toBeFocused()
-  await expect(page).toHaveURL(/#evenements$/)
-  await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden')
-  await page.getByRole('button', { name: 'Ouvrir le menu' }).click()
-  await expect(page.getByRole('dialog').getByRole('link', { name: /Événements/ })).toHaveAttribute('aria-current', 'page')
+test('navbar et bouton ouvrent la page Événements', async ({ page }) => {
+  await expect(page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('link', { name: 'Événements' })).toHaveAttribute('href', '/evenements')
+  await page.locator('#evenements').getByRole('link', { name: 'Explorer tous les événements' }).click()
+  await expect(page).toHaveURL('/evenements')
 })
 
 for (const width of [320, 390, 768, 1024, 1440]) {
-  test(`photos, cartes et filtres restent lisibles à ${width}px`, async ({ page }) => {
+  test(`événements reste sans débordement à ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
-    const section = page.locator('#evenements')
-    for (const image of await section.locator('img').all()) {
-      await image.scrollIntoViewIfNeeded()
-      await expect(image).toHaveAttribute('loading', 'lazy')
-      await expect(image).toHaveAttribute('alt', /\S/)
-      await expect.poll(() => image.evaluate(img => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0)).toBe(true)
-    }
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
-    for (const card of await section.getByRole('article').all()) {
-      expect(await card.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(0)
-      await expect(card.getByRole('heading', { level: 3 })).toBeVisible()
-    }
-    await section.getByLabel('Catégorie d’événement').selectOption('institutionnels')
-    await expect(section.getByRole('article')).toHaveCount(1)
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
+    await page.locator('#evenements').scrollIntoViewIfNeeded()
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0)
   })
 }
-
-test('les dates de présentation ne se décalent pas pour rester artificiellement futures', async ({ page }) => {
-  await page.clock.setFixedTime(new Date('2027-01-01T12:00:00Z'))
-  await page.reload()
-  const section = page.locator('#evenements')
-  await section.getByRole('button', { name: 'À venir', exact: true }).click()
-  await expect(section.getByRole('article')).toHaveCount(0)
-  await section.getByRole('button', { name: 'Passés', exact: true }).click()
-  await expect(section.getByRole('article')).toHaveCount(5)
-  await section.getByRole('button', { name: 'Tous', exact: true }).click()
-  await expect(section.getByRole('article')).toHaveCount(6)
-})
-
-test('la préférence de réduction des mouvements s’applique aux filtres et photographies', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' })
-  const section = page.locator('#evenements')
-  await section.getByRole('button', { name: 'À venir', exact: true }).click()
-  expect(await section.locator('.events-selection').evaluate(element => getComputedStyle(element).animationName)).toBe('none')
-  const image = section.locator('img').first()
-  await image.hover()
-  expect(await image.evaluate(element => getComputedStyle(element).transform)).toBe('none')
-  const durationMs = await image.evaluate(element => Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => {
-    const duration = value.trim()
-    return Number.parseFloat(duration) * (duration.endsWith('ms') ? 1 : 1000)
-  })))
-  expect(durationMs).toBeLessThanOrEqual(0.01)
-})

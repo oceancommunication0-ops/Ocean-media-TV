@@ -8,6 +8,14 @@
 .events-heading h2 > span { color: #087ca7; }
 .events-introduction { flex: 0 0 300px; max-width: 340px; margin: 0 0 4px; color: #526778; font-size: 13px; line-height: 1.9; }
 .events-filter-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; border-block: 1px solid #dcdedc; padding-block: 16px; }
+.events-category-bar { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 28px; }
+.events-filter-label { display: inline-flex; align-items: center; gap: 8px; color: #526778; font-size: 9px; font-weight: 700; }
+.events-category-tabs { display: flex; min-width: 0; align-items: stretch; gap: 24px; overflow-x: auto; scrollbar-width: none; }
+.events-category-tabs::-webkit-scrollbar { display: none; }
+.events-category-tabs button { position: relative; min-height: 58px; flex: 0 0 auto; padding: 8px 0; border: 0; background: transparent; color: #526778; font-size: 10px; font-weight: 650; white-space: nowrap; }
+.events-category-tabs button::after { content: ''; position: absolute; right: 0; bottom: -17px; left: 0; height: 2px; background: #087ca7; transform: scaleX(0); transform-origin: left; transition: transform .2s ease; }
+.events-category-tabs button:hover, .events-category-tabs button[aria-pressed='true'] { color: #087ca7; }
+.events-category-tabs button:hover::after, .events-category-tabs button[aria-pressed='true']::after { transform: scaleX(1); }
 .events-periods { display: inline-flex; align-items: center; padding: 4px; gap: 3px; background: #eaece9; border-radius: 5px; }
 .events-periods button { min-height: 42px; padding: 10px 25px; border: 0; border-radius: 3px; background: transparent; color: #4c5f6d; font-size: 12px; font-weight: 650; transition: background .2s ease, color .2s ease, box-shadow .2s ease; }
 .events-periods button:hover { background: #f9faf8; color: #071c35; }
@@ -84,6 +92,8 @@
 .events-single .event-featured-content { align-self: center; padding: 36px; }
 .event-registration { display: inline-flex; align-items: center; align-self: flex-start; gap: 10px; min-height: 44px; margin-top: 17px; color: #087ca7; font-size: 12px; font-weight: 700; }
 .event-featured .event-registration { color: #79dedb; }
+.event-more-button { display: inline-flex; width: fit-content; min-height: 42px; align-items: center; gap: 10px; margin-top: 17px; padding: 0; border: 0; border-bottom: 1px solid currentColor; background: transparent; color: #087ca7; font-size: 10px; font-weight: 750; }
+.event-featured .event-more-button { color: #75dddd; }
 .event-registration:hover { text-decoration: underline; text-underline-offset: 4px; }
 .event-featured a:focus-visible { outline-color: #17b8bc; }
 .events-empty { display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; min-height: 350px; padding: 40px 20px; border: 1px solid #dce3e4; background: #fffdfa; border-radius: 5px; }
@@ -95,10 +105,16 @@
 .events-bottom { display: flex; align-items: center; justify-content: space-between; gap: 30px; padding-top: 28px; margin-top: 35px; border-top: 1px solid #dcdedc; }
 .events-bottom > p { color: #526778; font-size: 16px; line-height: 1.65; letter-spacing: -.25px; margin: 0; }
 .events-bottom strong { font-weight: 550; color: #071c35; }
+.events-bottom-simple { justify-content: flex-end; }
 .events-agenda-placeholder, .events-agenda-link { display: inline-flex; align-items: center; gap: 15px; color: #3c5669; font-size: 12px; font-weight: 550; }
 .events-agenda-placeholder > svg { color: #087ca7; }
 .events-agenda-placeholder small { display: block; color: #526778; font-size: 10px; font-weight: 450; margin-top: 6px; }
-.events-agenda-link { min-height: 44px; }
+.events-agenda-link { min-height: 48px; padding: 0 18px; border: 1px solid #071c35; border-radius: 4px; background: #071c35; color: #fff; font-weight: 700; transition: background-color .22s ease, border-color .22s ease, transform .22s ease, box-shadow .22s ease; }
+.events-agenda-link > svg:first-child { color: #62d3d4; }
+.events-agenda-link > svg:last-child { margin-left: 5px; transition: transform .22s ease; }
+.events-agenda-link:hover { background: #087ca7; border-color: #087ca7; transform: translateY(-2px); box-shadow: 0 10px 24px #071c3514; }
+.events-agenda-link:hover > svg:last-child { transform: translateX(3px); }
+.events-agenda-link:focus-visible { outline: 3px solid #f49b37; outline-offset: 4px; }
 .events-presentation-note { color: #62727e; margin: 23px 0 0; font-size: 9px; line-height: 1.8; }
 @media (hover: hover) { .event-card:hover { border-color: #bacdd4; box-shadow: 0 8px 25px #071c3506; } .event-card:hover .event-image > img, .event-featured:hover .event-image > img { transform: scale(1.025); } }
 @keyframes events-reveal { from { opacity: .3; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -151,6 +167,7 @@
   .events-title-break { display: none; }
   .events-introduction { font-size: 12px; line-height: 1.9; margin-top: 18px; }
   .events-filter-bar { gap: 10px; padding-block: 13px; }
+  .events-category-bar { grid-template-columns: 1fr; }
   .events-periods { display: flex; width: 100%; }
   .events-periods button { flex: 1; padding-inline: 12px; }
   .events-category-filter { flex: 0 0 100%; }
@@ -180,4 +197,4 @@
   .events-empty p { font-size: 12px; }
 }
 @media (max-width: 359px) { .events-container { padding-inline: 16px; } .events-heading h2 { font-size: 33px; letter-spacing: -1.3px; } .event-featured h3 { font-size: 25px; } .event-featured-content, .events-single .event-featured-content { padding: 21px 18px; } .events-selection-meta > span { max-width: 160px; } }
-@media (prefers-reduced-motion: reduce) { .events-selection { animation: none; } .events-periods button, .event-card, .event-image > img { transition: none; } .event-card:hover .event-image > img, .event-featured:hover .event-image > img { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .events-selection { animation: none; } .events-periods button, .event-card, .event-image > img, .events-agenda-link, .events-agenda-link svg { transition: none; } .event-card:hover .event-image > img, .event-featured:hover .event-image > img, .events-agenda-link:hover, .events-agenda-link:hover svg { transform: none; } }

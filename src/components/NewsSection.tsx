@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
-import { ArrowRight, ArrowUpRight, Clock3, X } from 'lucide-react'
-import { newsArticles, newsCategories, newsImageSources, readingMinutes, type NewsArticle, type NewsCategory } from '../lib/news-content'
+import { AppLink } from './AppLink'
+import { useState } from 'react'
+import { ArrowRight, ArrowUpRight } from 'lucide-react'
+import { newsImageSources, type ArticleSummary as NewsArticle } from '../lib/news-content'
+import { LoadState, useCollection, useSite } from '../lib/api'
 import './news.css'
 
 const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: 'short',
   year: 'numeric',
-  timeZone: 'UTC',
+  timeZone: 'Africa/Kinshasa',
 })
 
 function ArticleMeta({ article }: { article: NewsArticle }) {
@@ -15,9 +17,7 @@ function ArticleMeta({ article }: { article: NewsArticle }) {
     <div className="news-meta">
       <span>{article.author}</span>
       <span className="news-meta-dot" aria-hidden="true" />
-      <time dateTime={article.publishedAt}>{dateFormatter.format(new Date(article.publishedAt))}</time>
-      <span className="news-meta-dot" aria-hidden="true" />
-      <span className="news-read-time"><Clock3 size={12} aria-hidden="true" />{readingMinutes(article)} min</span>
+      {article.publishedAt && <time dateTime={article.publishedAt}>{dateFormatter.format(new Date(article.publishedAt))}</time>}
     </div>
   )
 }
@@ -25,13 +25,13 @@ function ArticleMeta({ article }: { article: NewsArticle }) {
 function ArticleCard({ article, featured }: { article: NewsArticle; featured?: boolean }) {
   return (
     <article className={`news-card${featured ? ' news-card-featured' : ''}`}>
-      <a className="news-card-link" href={article.href} aria-label={article.title}>
+      <AppLink className="news-card-link" href={article.href} aria-label={article.title}>
         <div className="news-card-image-wrap">
           <img
             className="news-card-image"
             src={article.image}
             srcSet={newsImageSources(article)}
-            sizes={featured ? '(max-width: 899px) calc(100vw - 44px), (max-width: 1512px) 52vw, 735px' : '(max-width: 575px) 118px, (max-width: 899px) 30vw, 210px'}
+            sizes={featured ? '(max-width: 899px) calc(100vw - 44px), (max-width: 1512px) 52vw, 735px' : '(max-width: 575px) calc(100vw - 44px), (max-width: 767px) 160px, (max-width: 899px) 30vw, 210px'}
             alt={article.imageAlt}
             width={1536}
             height={1024}
@@ -43,7 +43,7 @@ function ArticleCard({ article, featured }: { article: NewsArticle; featured?: b
         </div>
         <div className="news-card-copy">
           <div className="news-category-line">
-            <span className={`news-category category-${article.category.toLocaleLowerCase('fr')}`}>{article.category}</span>
+            <span className={`news-category category-${article.category.toLocaleLowerCase('fr')}`}>{article.categoryLabel ?? article.category}</span>
             <span className="news-format">{article.format}</span>
           </div>
           <h3>{article.title}</h3>
@@ -54,32 +54,16 @@ function ArticleCard({ article, featured }: { article: NewsArticle; featured?: b
             <span><ArrowUpRight size={featured ? 20 : 17} strokeWidth={1.6} /></span>
           </span>
         </div>
-      </a>
+      </AppLink>
     </article>
   )
 }
 
 export function NewsSection() {
-  const [category, setCategory] = useState<NewsCategory>('Tout voir')
-  const [notice, setNotice] = useState('')
-  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const filtered = newsArticles.filter(article => category === 'Tout voir' || article.category === category)
-  const visible = filtered.slice(0, 4)
-
-  useEffect(() => () => {
-    if (noticeTimer.current) clearTimeout(noticeTimer.current)
-  }, [])
-
-  function showNotice(message: string) {
-    if (noticeTimer.current) clearTimeout(noticeTimer.current)
-    setNotice(message)
-    noticeTimer.current = setTimeout(() => setNotice(''), 5000)
-  }
-
-  function holdFutureLink(event: MouseEvent<HTMLAnchorElement>, message: string) {
-    event.preventDefault()
-    showNotice(message)
-  }
+  const [category, setCategory] = useState('')
+  const newsCategories = useSite().categories.articles
+  const data = useCollection('articles', { category, limit: 4 })
+  const visible = data.items
 
   return (
     <section id="actualites" className="news-section" aria-labelledby="news-title" tabIndex={-1}>
@@ -91,27 +75,24 @@ export function NewsSection() {
 
         <div className="news-toolbar">
           <div className="news-filters" role="group" aria-label="Filtrer les actualités">
-            {newsCategories.map(item => <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>)}
+            <button type="button" aria-pressed={category === ''} onClick={() => setCategory('')}>Tout voir</button>
+            {newsCategories.map(item => <button key={item.id} type="button" aria-pressed={category === item.id} onClick={() => setCategory(item.id)}>{item.label}</button>)}
           </div>
           <span className="news-edition"><span aria-hidden="true" />DERNIÈRE ÉDITION</span>
         </div>
 
+        <LoadState {...data} variant="list" count={4} />
+        {!data.loading && !data.error && visible.length === 0 && <p className="api-state">Aucune actualité disponible pour cette sélection.</p>}
         <div className={`news-grid${visible.length < 4 ? ' news-grid-filtered' : ''}`}>
           {visible[0] && <ArticleCard article={visible[0]} featured />}
           {visible.length > 1 && <div className="news-secondary-list">{visible.slice(1).map(article => <ArticleCard key={article.id} article={article} />)}</div>}
         </div>
 
-        <div className="news-bottom-line">
-          <p>{category === 'Tout voir' ? 'La sélection de la rédaction' : `${filtered.length} publication${filtered.length > 1 ? 's' : ''} · ${category}`}</p>
-          <a className="news-all-link" href="/actualites" onClick={event => holdFutureLink(event, 'La page de toutes les actualités sera bientôt disponible.')}>
+        <div className="news-bottom-line news-bottom-line-simple">
+          <AppLink className="news-all-link" href="/actualites">
             Voir toutes les actualités <ArrowRight size={17} strokeWidth={1.6} aria-hidden="true" />
-          </a>
-          <span className="news-bottom-signature" aria-hidden="true">UN AUTRE REGARD SUR DEMAIN.</span>
+          </AppLink>
         </div>
-      </div>
-
-      <div className={`news-notice${notice ? ' is-visible' : ''}`} role="status" aria-live="polite" aria-atomic="true">
-        {notice && <><span>{notice}</span><button type="button" aria-label="Fermer la notification" onClick={() => setNotice('')}><X size={16} aria-hidden="true" /></button></>}
       </div>
     </section>
   )

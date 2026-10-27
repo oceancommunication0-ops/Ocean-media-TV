@@ -1,5 +1,6 @@
-import { ArrowUpRight, Building2, CalendarDays, Clock3, MapPin, Monitor } from 'lucide-react'
-import { eventCategories, type MediaEvent } from '../lib/events-content'
+import { ArrowRight, ArrowUpRight, Building2, CalendarDays, Clock3, MapPin, Monitor } from 'lucide-react'
+import { type MediaEvent } from '../lib/events-content'
+import { useSite } from '../lib/api'
 import { eventDateDisplay, eventStatus, type EventStatus } from '../lib/event-dates'
 
 const statusLabels: Record<EventStatus, string | null> = {
@@ -17,8 +18,8 @@ function EventImage({ event, featured = false }: { event: MediaEvent; featured?:
   const display = eventDateDisplay(event.schedule)
   return <div className="event-image">
     <img
-      src={`/images/${event.image.src}.webp`}
-      srcSet={`/images/${event.image.src}-480.webp 480w, /images/${event.image.src}-800.webp 800w, /images/${event.image.src}.webp 1200w`}
+      src={event.image.src}
+      srcSet={event.image.srcSet}
       sizes={featured ? '(max-width: 759px) calc(100vw - 44px), (max-width: 1099px) calc(100vw - 64px), 55vw' : '(max-width: 575px) calc(100vw - 44px), (max-width: 1099px) 45vw, 30vw'}
       alt={event.image.alt} width="1200" height="800" loading="lazy" decoding="async"
       style={{ objectPosition: event.image.position }}
@@ -45,8 +46,8 @@ function RegistrationLink({ event, now }: { event: MediaEvent; now: Date }) {
   return <a className="event-registration" href={event.registrationUrl} target="_blank" rel="noopener noreferrer">S’inscrire <ArrowUpRight size={16} aria-hidden="true" /><span className="sr-only"> à {event.title} — nouvel onglet</span></a>
 }
 
-export function FeaturedEvent({ event, now }: { event: MediaEvent; now: Date }) {
-  const category = eventCategories.find(item => item.id === event.category)!
+export function FeaturedEvent({ event, now, onSelect }: { event: MediaEvent; now: Date; onSelect?: (event: MediaEvent, trigger: HTMLElement) => void }) {
+  const category = useSite().categories.events.find(item => item.id === event.category)!
   return <article className="event-featured" aria-labelledby={`event-${event.id}`}>
     <EventImage event={event} featured />
     <div className="event-featured-content">
@@ -55,12 +56,13 @@ export function FeaturedEvent({ event, now }: { event: MediaEvent; now: Date }) 
       <p className="event-description">{event.description}</p>
       <EventDetails event={event} />
       <RegistrationLink event={event} now={now} />
+      {onSelect && <button type="button" className="event-more-button" aria-haspopup="dialog" onClick={click => onSelect(event, click.currentTarget)}>En savoir plus <ArrowRight size={15} aria-hidden="true" /></button>}
     </div>
   </article>
 }
 
-export function EventCard({ event, now, variant = 'compact' }: { event: MediaEvent; now: Date; variant?: 'compact' | 'standard' }) {
-  const category = eventCategories.find(item => item.id === event.category)!
+export function EventCard({ event, now, variant = 'compact', onSelect }: { event: MediaEvent; now: Date; variant?: 'compact' | 'standard'; onSelect?: (event: MediaEvent, trigger: HTMLElement) => void }) {
+  const category = useSite().categories.events.find(item => item.id === event.category)!
   return <article className={`event-card event-card-${variant}`} aria-labelledby={`event-${event.id}`}>
     <EventImage event={event} />
     <div className="event-card-content">
@@ -69,6 +71,7 @@ export function EventCard({ event, now, variant = 'compact' }: { event: MediaEve
       {variant === 'standard' && <p className="event-description">{event.description}</p>}
       <EventDetails event={event} />
       <RegistrationLink event={event} now={now} />
+      {onSelect && <button type="button" className="event-more-button" aria-haspopup="dialog" onClick={click => onSelect(event, click.currentTarget)}>En savoir plus <ArrowRight size={15} aria-hidden="true" /></button>}
     </div>
   </article>
 }

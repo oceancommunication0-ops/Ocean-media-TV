@@ -1,0 +1,83 @@
+import { expect, test, type Page } from '@playwright/test'
+
+const owner = { id: 'admin-owner', username: 'benji', email: 'benji@ocean.test', displayName: 'Benji Tembwa', active: true, lastLoginAt: null, createdAt: '2026-10-24T10:00:00.000Z', updatedAt: '2026-10-25T10:20:00.000Z' }
+const counts = { total: 0, published: 0, drafts: 0 }
+const overview = { generatedAt: new Date().toISOString(), resources: { articles: counts, videos: counts, opportunities: counts, trainings: counts, events: counts, hero: counts }, trainingSessions: counts, administrators: { total: 1, active: 1, owners: 1 }, recentActivity: [] }
+
+async function authenticate(page: Page) {
+  await page.route('**/api/admin/auth/me', route => route.fulfill({ status: 401, json: { error: { message: 'Authentification requise.' } } }))
+  await page.route('**/api/admin/auth/login', route => route.fulfill({ json: { user: owner, csrfToken: 'csrf-media' } }))
+  await page.route('**/api/admin/overview', route => route.fulfill({ json: overview }))
+}
+async function login(page: Page, path: string) {
+  await page.goto(path)
+  await page.getByLabel('Nom d’utilisateur ou email').fill('benji')
+  await page.getByLabel('Mot de passe', { exact: true }).fill('Phrase-de-passe-4821!')
+  await page.getByRole('button', { name: 'Se connecter', exact: true }).click()
+}
+
+test('Océan TV permet de créer une vidéo YouTube et masque les anciennes configurations', async ({ page }) => {
+  await authenticate(page)
+  await page.route('**/api/admin/categories/videos', route => route.fulfill({ json: { items: [{ id: 'reportages', label: 'Reportages', count: 0, sortOrder: 0 }] } }))
+  await page.route('**/api/admin/content/videos?*', route => route.fulfill({ json: { items: [], pagination: { page: 1, limit: 9, total: 0, totalPages: 0 } } }))
+  await page.route('**/api/admin/content/videos', route => route.fulfill({ status: 201, json: { data: route.request().postDataJSON().data } }))
+  await login(page, '/admin/ocean-tv')
+  await expect(page.getByRole('heading', { level: 1, name: 'Océan TV', exact: true })).toBeVisible()
+  const navigation = page.getByRole('navigation', { name: 'Navigation de l’administration', exact: true })
+  await expect(navigation.getByRole('link', { name: 'Catégories', exact: true })).toHaveCount(0)
+  await expect(navigation.getByRole('link', { name: 'Paramètres du site', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Ajouter une vidéo', exact: true }).first().click()
+  const dialog = page.getByRole('dialog', { name: 'Ajouter une vidéo', exact: true })
+  await dialog.getByLabel('Titre de la vidéo').fill('La jeunesse innove à Kinshasa')
+  await dialog.getByLabel('Description', { exact: true }).fill('Un reportage au cœur des projets portés par une nouvelle génération.')
+  await dialog.getByLabel('URL ou identifiant YouTube').fill('https://youtu.be/aBU7JsDsF0Y')
+  await expect(dialog.getByLabel('Description accessible')).toHaveCount(0)
+  await expect(dialog.getByLabel('Durée en secondes')).toHaveCount(0)
+  await expect(dialog.getByLabel('Chaîne / producteur')).toHaveCount(0)
+  await expect(dialog.getByLabel('Identifiant interne')).toHaveCount(0)
+  await dialog.getByLabel('Visibilité').selectOption('published')
+  await dialog.getByLabel('Vidéo principale').check()
+  const requestPromise = page.waitForRequest(request => request.method() === 'POST' && request.url().endsWith('/api/admin/content/videos'))
+  await dialog.getByRole('button', { name: 'Enregistrer', exact: true }).click()
+  const request = await requestPromise
+  const payload = request.postDataJSON()
+  expect(request.headers()['x-csrf-token']).toBe('csrf-media')
+  expect(payload.data.youtubeId).toBe('aBU7JsDsF0Y')
+  expect(payload.data.thumbnail).toBe('https://i.ytimg.com/vi/aBU7JsDsF0Y/maxresdefault.jpg')
+  expect(payload.data.category).toBe('reportages')
+  expect(payload.data.id).toMatch(/^la-jeunesse-innove-a-kinshasa-[a-f0-9]{8}$/)
+  expect(payload.data.thumbnailAlt).toContain('La jeunesse innove à Kinshasa')
+  expect(payload.published).toBe(true)
+  expect(payload.featured).toBe(true)
+  await expect(dialog).toHaveCount(0)
+})
+
+test('Accueil permet de composer un regard et son aperçu reste responsive', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await authenticate(page)
+  await page.route('**/api/admin/content/hero?*', route => route.fulfill({ json: { items: [], pagination: { page: 1, limit: 9, total: 0, totalPages: 0 } } }))
+  await page.route('**/api/admin/content/hero', route => route.fulfill({ status: 201, json: { data: route.request().postDataJSON().data } }))
+  await login(page, '/admin/accueil')
+  await expect(page.getByRole('heading', { level: 1, name: 'Accueil', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Ajouter un regard', exact: true }).first().click()
+  const dialog = page.getByRole('dialog', { name: 'Ajouter un regard', exact: true })
+  await dialog.getByLabel('Titre principal').fill('Faire grandir les idées de demain.')
+  await dialog.getByLabel('Courte description').fill('Des récits qui donnent aux jeunes l’envie et les moyens d’agir.')
+  await dialog.getByLabel('Libellé de l’onglet').fill('S’inspirer')
+  await dialog.getByLabel('Signature éditoriale').fill('INITIATIVES & AVENIR')
+  await dialog.getByLabel('Source de l’image').fill('/images/hero-voices.webp')
+  await dialog.getByLabel('Description accessible').fill('Une jeune créatrice congolaise regarde la ville.')
+  await dialog.getByLabel('Visibilité').selectOption('published')
+  await expect(dialog.getByLabel('Identifiant interne')).toHaveCount(0)
+  await expect(dialog.getByLabel('Cadrage')).toHaveCount(0)
+  await expect(dialog.getByRole('heading', { name: 'Faire grandir les idées de demain.', exact: true })).toBeVisible()
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0)
+  const requestPromise = page.waitForRequest(request => request.method() === 'POST' && request.url().endsWith('/api/admin/content/hero'))
+  await dialog.getByRole('button', { name: 'Enregistrer le regard', exact: true }).click()
+  const payload = (await requestPromise).postDataJSON()
+  expect(payload.data.title).toBe('Faire grandir les idées de demain.')
+  expect(payload.data.category).toBe('INITIATIVES & AVENIR')
+  expect(payload.data.image).toBe('/images/hero-voices.webp')
+  expect(payload.published).toBe(true)
+  await expect(dialog).toHaveCount(0)
+})

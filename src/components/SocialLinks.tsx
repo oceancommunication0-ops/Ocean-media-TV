@@ -1,16 +1,12 @@
-import { Facebook, Instagram, Youtube } from 'lucide-react'
-import { socialLinks, type SocialNetwork } from '../lib/site-config'
-
-const networks = [
-  { name: 'Facebook', icon: Facebook },
-  { name: 'YouTube', icon: Youtube },
-  { name: 'Instagram', icon: Instagram },
-] as const
+import { type SocialNetwork } from '../lib/site-config'
+import { useSite } from '../lib/api'
+import { socialNetworks } from './SocialIcon'
 
 export function SocialLinks({ onUnavailable }: { onUnavailable: (name: SocialNetwork) => void }) {
+  const { socialLinks } = useSite()
   return (
     <div className="social-links" aria-label="Réseaux sociaux">
-      {networks.map(({ name, icon: Icon }) => {
+      {socialNetworks.map(({ name, icon: Icon }) => {
         const url = socialLinks[name]
         return url ? (
           <a key={name} href={url} target="_blank" rel="noopener noreferrer" aria-label={`${name} — nouvel onglet`} className="social-link">

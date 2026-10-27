@@ -12,18 +12,6 @@ const topics = [
   ['Compétences professionnelles', 'Développer des aptitudes utiles à son parcours professionnel.'],
 ]
 
-async function expectTrainingAnchor(page: Page) {
-  await expect(page).toHaveURL(/#formations$/)
-  await expect(training(page)).toBeInViewport()
-  await expect.poll(async () => {
-    const top = await training(page).evaluate(element => element.getBoundingClientRect().top)
-    const headerBottom = await page.locator('header').evaluate(element => element.getBoundingClientRect().bottom)
-    return top >= headerBottom - 1
-  }).toBe(true)
-  await expect(training(page)).toBeFocused()
-  await expect(page.locator('.notification')).toHaveCount(0)
-}
-
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
 })
@@ -34,7 +22,7 @@ test('Formations suit Opportunités et présente des domaines sans inventer de s
   await expect(section).toHaveAttribute('id', 'formations')
   await expect(section).toHaveAttribute('aria-labelledby', 'training-title')
   await expect(section.getByRole('heading', { level: 2, name: heading, exact: true })).toBeVisible()
-  expect(await page.locator('main > section').evaluateAll(sections => sections.map(section => section.id))).toEqual(['', 'actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements', 'portraits'])
+  expect(await page.locator('main > section').evaluateAll(sections => sections.map(section => section.id))).toEqual(['', 'actualites', 'ocean-tv', 'opportunites', 'formations', 'evenements'])
   await expect(section).toContainText('Des connaissances et des compétences pour transformer vos ambitions en actions concrètes.')
   await expect(section.getByRole('article')).toHaveCount(6)
   for (const [title, description] of topics) {
@@ -47,9 +35,12 @@ test('Formations suit Opportunités et présente des domaines sans inventer de s
   await expect(section.getByText(/inscriptions ouvertes|réserver|s’inscrire/i)).toHaveCount(0)
   await expect(section.getByRole('heading', { name: 'Apprendre pour mieux entreprendre.', exact: true })).toBeVisible()
   await expect(section).toContainText('Océan Communication encourage le développement des compétences personnelles et professionnelles afin d’aider les jeunes à concrétiser leurs ambitions.')
+  const exploreLink = section.getByRole('link', { name: 'Explorer toutes les formations', exact: true })
+  await expect(exploreLink).toHaveAttribute('href', '/formations')
+  await expect(exploreLink).not.toHaveAttribute('target')
 })
 
-test('la photographie est locale, chargée à la demande et créditée', async ({ page }) => {
+test('la photographie est locale et chargée à la demande sans légende', async ({ page }) => {
   const section = training(page)
   const photo = section.getByRole('img')
   await photo.scrollIntoViewIfNeeded()
@@ -59,44 +50,38 @@ test('la photographie est locale, chargée à la demande et créditée', async (
   await expect(photo).toHaveAttribute('alt', /\S/)
   await expect(photo).toHaveAttribute('srcset', /training-workshop-480\.webp.*training-workshop-800\.webp/)
   await expect.poll(() => photo.evaluate(element => (element as HTMLImageElement).complete && (element as HTMLImageElement).naturalWidth > 0)).toBe(true)
-  await expect(section.getByRole('link', { name: /Pexels/i })).toHaveAttribute('href', /^https:\/\/(www\.)?pexels\.com\//)
+  await expect(section.locator('figcaption')).toHaveCount(0)
 })
 
-test('la navigation active Formations, suit le défilement et retrouve Opportunités', async ({ page }) => {
+test('la navigation ouvre directement la page Formations', async ({ page }) => {
   const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
   const link = navigation.getByRole('link', { name: 'Formations', exact: true })
-  await expect(link).toHaveAttribute('href', '#formations')
+  await expect(link).toHaveAttribute('href', '/formations')
   await link.click()
-  await expectTrainingAnchor(page)
-  await expect(link).toHaveAttribute('aria-current', 'page')
-  await expect(navigation.locator('[aria-current="page"]')).toHaveCount(1)
-  const opportunities = navigation.getByRole('link', { name: 'Opportunités', exact: true })
-  await opportunities.click()
-  await expect(opportunities).toHaveAttribute('aria-current', 'page')
-  await expect(link).not.toHaveAttribute('aria-current')
-  await page.evaluate(() => document.getElementById('formations')?.scrollIntoView({ block: 'start', behavior: 'instant' }))
-  await expect(link).toHaveAttribute('aria-current', 'page')
+  await expect(page).toHaveURL('/formations')
+  await expect(page.getByRole('heading', { level: 1, name: 'Des compétences pour prendre sa place.' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Navigation principale', exact: true }).getByRole('link', { name: 'Formations', exact: true })).toHaveAttribute('aria-current', 'page')
 })
 
-test('la recherche mène à Formations en fermant le dialogue et en déplaçant le focus', async ({ page }) => {
+test('la recherche ouvre la page Formations en fermant le dialogue', async ({ page }) => {
   await page.getByRole('button', { name: 'Ouvrir la recherche', exact: true }).click()
   const dialog = page.getByRole('dialog', { name: 'Que recherchez-vous ?' })
   await dialog.getByRole('searchbox').fill('formation')
   await dialog.getByRole('link', { name: 'Formations', exact: true }).click()
   await expect(dialog).toHaveCount(0)
-  await expectTrainingAnchor(page)
+  await expect(page).toHaveURL('/formations')
 })
 
 test.describe('Formations sur mobile', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('le menu se ferme, libère le scroll et garde la rubrique active', async ({ page }) => {
+  test('le menu se ferme, libère le scroll et ouvre la page Formations', async ({ page }) => {
     const trigger = page.getByRole('button', { name: 'Ouvrir le menu', exact: true })
     await trigger.click()
     let menu = page.getByRole('dialog', { name: 'Menu principal' })
     await menu.getByRole('link', { name: /Formations/ }).click()
     await expect(menu).toHaveCount(0)
-    await expectTrainingAnchor(page)
+    await expect(page).toHaveURL('/formations')
     await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden')
     await trigger.click()
     menu = page.getByRole('dialog', { name: 'Menu principal' })
@@ -132,8 +117,8 @@ test.describe('Formations et réduction des mouvements', () => {
     const link = navigation.getByRole('link', { name: 'Formations', exact: true })
     await link.focus()
     await page.keyboard.press('Enter')
-    await expectTrainingAnchor(page)
-    const article = training(page).getByRole('article').first()
+    await expect(page).toHaveURL('/formations')
+    const article = page.locator('.training-card').first()
     await article.hover()
     const maximumTransition = await article.evaluate(element => Math.max(...getComputedStyle(element).transitionDuration.split(',').map(value => {
       const trimmed = value.trim()

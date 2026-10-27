@@ -2,17 +2,6 @@ import { expect, test, type Page } from '@playwright/test'
 
 const tv = (page: Page) => page.getByRole('region', { name: 'Océan TV', exact: true })
 
-async function expectTvAnchor(page: Page) {
-  await expect(page).toHaveURL(/#ocean-tv$/)
-  await expect(tv(page)).toBeInViewport()
-  await expect.poll(async () => {
-    const top = await tv(page).evaluate(element => element.getBoundingClientRect().top)
-    const headerBottom = await page.locator('header').evaluate(element => element.getBoundingClientRect().bottom)
-    return top >= headerBottom - 1
-  }).toBe(true)
-  await expect(page.locator('.notification')).toHaveCount(0)
-}
-
 test.beforeEach(async ({ page }) => {
   await page.route('https://www.youtube-nocookie.com/embed/**', async route => {
     await route.fulfill({
@@ -23,16 +12,17 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/')
 })
 
-test('Océan TV suit les Actualités et présente sept vidéos sans lecteur chargé', async ({ page }) => {
+test('Océan TV suit les Actualités et présente quatre vidéos sans lecteur chargé', async ({ page }) => {
   const section = tv(page)
   await section.scrollIntoViewIfNeeded()
   await expect(section).toHaveAttribute('id', 'ocean-tv')
   await expect(section).toHaveAttribute('aria-labelledby', 'tv-title')
   await expect(section.getByRole('heading', { level: 2, name: 'Océan TV', exact: true })).toBeVisible()
-  await expect(page.locator('main > section')).toHaveCount(7)
+  await expect(page.locator('main > section')).toHaveCount(6)
   expect(await page.locator('main > section').nth(2).getAttribute('id')).toBe('ocean-tv')
-  await expect(section.getByRole('article')).toHaveCount(7)
-  await expect(section.getByRole('button')).toHaveCount(7)
+  await expect(section.getByRole('article')).toHaveCount(4)
+  await expect(section.locator('.tv-select-button')).toHaveCount(4)
+  await expect(section.getByRole('link', { name: 'Explorer toutes les vidéos', exact: true })).toHaveAttribute('href', '/ocean-tv')
   await expect(page.locator('iframe')).toHaveCount(0)
   for (const image of await section.getByRole('img').all()) {
     await image.scrollIntoViewIfNeeded()
@@ -45,17 +35,33 @@ test('Océan TV suit les Actualités et présente sept vidéos sans lecteur char
   }
 })
 
+test('les filtres de l’accueil utilisent les catégories vidéo de l’API', async ({ page }) => {
+  const section = tv(page)
+  const filters = section.getByRole('group', { name: 'Filtrer les vidéos de l’accueil par format', exact: true })
+  await expect(filters.getByRole('button', { name: 'Toutes', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  const reportages = filters.getByRole('button', { name: 'Reportages', exact: true })
+  await reportages.click()
+  await expect(reportages).toHaveAttribute('aria-pressed', 'true')
+  await expect(section.locator('.tv-select-button')).toHaveCount(3)
+})
+
+test('le lien de la section ouvre la vidéothèque complète', async ({ page }) => {
+  const link = tv(page).getByRole('link', { name: 'Explorer toutes les vidéos', exact: true })
+  await link.click()
+  await expect(page).toHaveURL(/\/ocean-tv$/)
+  await expect(page.getByRole('heading', { level: 1, name: /Des images pour voir plus loin/i })).toBeVisible()
+})
+
 test('la sélection d’une vidéo à venir conserve le focus, bloque le scroll et ferme avec Échap', async ({ page }) => {
-  await page.route('**/src/lib/tv-content.ts', async route => {
+  await page.route('**/api/home', async route => {
     const response = await route.fetch()
-    const source = await response.text()
-    const fixtureSource = source.replace(/youtubeId:\s*["'][^"']+["']/, 'youtubeId: null')
-    expect(fixtureSource).not.toBe(source)
-    await route.fulfill({ response, body: fixtureSource })
+    const data = await response.json()
+    data.videos.items[0].youtubeId = null
+    await route.fulfill({ response, json: data })
   })
   await page.reload()
   const section = tv(page)
-  const trigger = section.getByRole('button').first()
+  const trigger = section.locator('.tv-select-button').first()
   await trigger.click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toBeVisible()
@@ -73,22 +79,13 @@ test('la sélection d’une vidéo à venir conserve le focus, bloque le scroll 
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe('hidden')
 })
 
-test('la navigation active Océan TV puis Actualités et Accueil selon la section', async ({ page }) => {
+test('la navigation ouvre directement la page Océan TV', async ({ page }) => {
   const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
   const link = navigation.getByRole('link', { name: 'Océan TV', exact: true })
-  const news = navigation.getByRole('link', { name: 'Actualités', exact: true })
-  const home = navigation.getByRole('link', { name: 'Accueil', exact: true })
-  await expect(link).toHaveAttribute('href', '#ocean-tv')
+  await expect(link).toHaveAttribute('href', '/ocean-tv')
   await link.click()
-  await expectTvAnchor(page)
-  await expect(link).toHaveAttribute('aria-current', 'page')
-  await expect(navigation.locator('[aria-current="page"]')).toHaveCount(1)
-  await news.click()
-  await expect(news).toHaveAttribute('aria-current', 'page')
-  await expect(link).not.toHaveAttribute('aria-current')
-  await home.click()
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(5)
-  await expect(home).toHaveAttribute('aria-current', 'page')
+  await expect(page).toHaveURL('/ocean-tv')
+  await expect(page.getByRole('navigation', { name: 'Navigation principale', exact: true }).getByRole('link', { name: 'Océan TV' })).toHaveAttribute('aria-current', 'page')
 })
 
 test('la recherche ouvre Océan TV sans conserver le dialogue de recherche', async ({ page }) => {
@@ -97,19 +94,20 @@ test('la recherche ouvre Océan TV sans conserver le dialogue de recherche', asy
   await search.getByRole('searchbox').fill('ocean tv')
   await search.getByRole('link', { name: 'Océan TV', exact: true }).click()
   await expect(search).toHaveCount(0)
-  await expectTvAnchor(page)
-  await expect(page.getByRole('navigation', { name: 'Navigation principale', exact: true }).getByRole('link', { name: 'Océan TV', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page).toHaveURL('/ocean-tv')
+  const navigation = page.getByRole('navigation', { name: 'Navigation principale', exact: true })
+  await expect(navigation.getByRole('link', { name: 'Océan TV', exact: true })).toHaveAttribute('aria-current', 'page')
 })
 
 test.describe('Océan TV sur mobile', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('le menu mène à Océan TV, ferme et conserve la rubrique active', async ({ page }) => {
+  test('le menu mène à la page Océan TV', async ({ page }) => {
     await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click()
     let menu = page.getByRole('dialog', { name: 'Menu principal' })
     await menu.getByRole('link', { name: /Océan TV/ }).click()
     await expect(menu).toHaveCount(0)
-    await expectTvAnchor(page)
+    await expect(page).toHaveURL('/ocean-tv')
     await page.getByRole('button', { name: 'Ouvrir le menu', exact: true }).click()
     menu = page.getByRole('dialog', { name: 'Menu principal' })
     await expect(menu.getByRole('link', { name: /Océan TV/ })).toHaveAttribute('aria-current', 'page')
@@ -137,7 +135,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
         return target === button || button.contains(target)
       })).toBe(true)
     }
-    await section.getByRole('button').last().click()
+    await section.locator('.tv-select-button').last().click()
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0)
@@ -150,7 +148,7 @@ test.describe('Océan TV et réduction des mouvements', () => {
   test.use({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' })
 
   test('une vidéo s’ouvre au clavier sans animation imposée', async ({ page }) => {
-    const trigger = tv(page).getByRole('button').first()
+    const trigger = tv(page).locator('.tv-select-button').first()
     await trigger.focus()
     await page.keyboard.press('Enter')
     const dialog = page.getByRole('dialog')
@@ -179,7 +177,7 @@ for (const width of [390, 1440]) {
     await expect(page.locator('iframe')).toHaveCount(0)
     expect(embedRequests).toEqual([])
 
-    const trigger = section.getByRole('button').first()
+    const trigger = section.locator('.tv-select-button').first()
     await trigger.click()
     const dialog = page.getByRole('dialog')
     const iframe = dialog.locator('iframe')

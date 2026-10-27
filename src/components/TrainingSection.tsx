@@ -1,5 +1,6 @@
-import { BriefcaseBusiness, GraduationCap, Lightbulb, Mic, PenLine, UsersRound } from 'lucide-react'
-import { trainingDomains } from '../lib/training-content'
+import { AppLink } from './AppLink'
+import { ArrowUpRight, BriefcaseBusiness, GraduationCap, Lightbulb, Mic, PenLine, UsersRound } from 'lucide-react'
+import { LoadState, useCollection, useSite } from '../lib/api'
 import './training.css'
 
 const domainIcons = {
@@ -12,6 +13,9 @@ const domainIcons = {
 }
 
 export function TrainingSection() {
+  const data = useCollection('trainings', { limit: 6 })
+  const trainingDomains = data.items
+  const { trainingImage } = useSite()
   return (
     <section id="formations" className="training-section" aria-labelledby="training-title" tabIndex={-1}>
       <div className="training-container">
@@ -26,14 +30,15 @@ export function TrainingSection() {
         <div className="training-composition">
           <figure className="training-figure">
             <div className="training-image-wrap">
-              <img src="/images/training-workshop.webp" srcSet="/images/training-workshop-480.webp 480w, /images/training-workshop-800.webp 800w, /images/training-workshop.webp 1200w" sizes="(max-width: 575px) calc(100vw - 44px), (max-width: 899px) calc(100vw - 64px), (max-width: 1512px) 39vw, 540px" alt="Une intervenante anime une présentation devant un paperboard, face à des participants." width={1200} height={1800} loading="lazy" decoding="async" />
-              <div className="training-image-caption" aria-hidden="true"><span className="training-photo-line" /><span>APPRENDRE. OSER. AVANCER.</span><p>Chaque compétence ouvre<br />une nouvelle possibilité.</p></div>
+              <img src={trainingImage.src} srcSet={trainingImage.srcSet} sizes="(max-width: 575px) calc(100vw - 44px), (max-width: 899px) calc(100vw - 64px), (max-width: 1512px) 39vw, 540px" alt={trainingImage.alt} width={1080} height={720} loading="lazy" decoding="async" />
+              <div className="training-image-caption" aria-hidden="true"><span className="training-photo-line" /><span>{trainingImage.homeEyebrow}</span><p>{trainingImage.homeCaption}</p></div>
             </div>
-            <figcaption>Photographie d’illustration · <a href="https://www.pexels.com/photo/woman-discussing-in-front-9487622/" target="_blank" rel="noopener noreferrer">Monstera Production / Pexels<span className="sr-only"> — nouvel onglet</span></a></figcaption>
           </figure>
 
           <div className="training-domains">
             <div className="training-domains-heading"><p>Nos domaines de formation</p><span>DES COMPÉTENCES POUR AVANCER</span></div>
+            <LoadState {...data} count={3} />
+            {!data.loading && !data.error && trainingDomains.length === 0 && <p className="api-state">Les domaines de formation seront bientôt disponibles.</p>}
             <div className="training-domain-grid">
               {trainingDomains.map(domain => {
                 const Icon = domainIcons[domain.icon]
@@ -48,7 +53,13 @@ export function TrainingSection() {
 
         <div className="training-editorial-note">
           <h3><span aria-hidden="true" />Apprendre pour<br />{' '}<em>mieux entreprendre.</em></h3>
-          <p>Océan Communication encourage le développement des compétences personnelles et professionnelles afin d’aider les jeunes à concrétiser leurs ambitions.</p>
+          <div className="training-editorial-copy">
+            <p>Océan Communication encourage le développement des compétences personnelles et professionnelles afin d’aider les jeunes à concrétiser leurs ambitions.</p>
+            <AppLink className="training-explore-link" href="/formations">
+              <span>Explorer toutes les formations</span>
+              <ArrowUpRight size={17} strokeWidth={1.8} aria-hidden="true" />
+            </AppLink>
+          </div>
         </div>
       </div>
     </section>
