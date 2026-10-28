@@ -9,7 +9,7 @@ import { existsSync } from 'node:fs'
 import { ZodError, z } from 'zod'
 import { prisma } from './db.js'
 import { config } from './config.js'
-import { mediaDirectory, mediaUploadParser, uploadImage } from './media.js'
+import { mediaUploadParser, serveImage, uploadImage } from './media.js'
 import { Prisma } from './generated/prisma/client.js'
 import { getContent, getHome, getSite, listContent, normalize, prepareContent } from './content-service.js'
 import { adminListQuerySchema, categorySchema, contactSettingsSchema, listQuerySchema, resourceSchema, sessionSchema, siteSchema, slugSchema, writeSchema } from './validation.js'
@@ -349,7 +349,7 @@ admin.delete('/training-sessions/:id', async (req, res) => {
   res.status(204).end()
 })
 app.use('/api/admin', admin)
-app.use('/images/uploads', express.static(mediaDirectory, { maxAge: '1y', immutable: true, dotfiles: 'deny', index: false }))
+app.get('/images/uploads/:filename', serveImage)
 app.get('/api/:resource', async (req, res) => {
   const resource = resourceSchema.safeParse(req.params.resource)
   if (!resource.success) { notFound(res); return }

@@ -5,9 +5,7 @@ import { app } from '../app.js'
 import { prisma } from '../db.js'
 import { config } from '../config.js'
 import { isArticleDocument } from '../../shared/article-document.js'
-import { readFile, unlink } from 'node:fs/promises'
-import path from 'node:path'
-import { mediaDirectory } from '../media.js'
+import { readFile } from 'node:fs/promises'
 
 const api = request(app)
 const authorization = 'Bearer ' + config.ADMIN_API_KEY
@@ -66,10 +64,15 @@ test('le téléversement refuse les fichiers non image et les requêtes non auth
 test('une image importée est réencodée et servie au lecteur', async () => {
   const source = await readFile('public/images/news-learning.webp')
   const response = await api.post('/api/admin/media').set('Authorization', authorization).set('Content-Type', 'image/webp').send(source).expect(201)
-  assert.match(response.body.src, /^\/images\/uploads\/[a-f0-9-]+\.webp$/)
-  const filename = path.join(mediaDirectory, path.basename(response.body.src))
+  const match = /^\/images\/uploads\/([a-f0-9-]+)\.webp$/.exec(response.body.src)
+  assert.ok(match)
+  const id = match[1]
   try {
+    const stored = await prisma.mediaAsset.findUniqueOrThrow({ where: { id } })
+    assert.equal(stored.contentType, 'image/webp')
+    assert.equal(stored.byteLength, stored.data.length)
     const image = await api.get(response.body.src).expect(200)
     assert.match(image.headers['content-type'], /image\/webp/)
-  } finally { await unlink(filename) }
+    assert.equal(Number(image.headers['content-length']), stored.byteLength)
+  } finally { await prisma.mediaAsset.deleteMany({ where: { id } }) }
 })

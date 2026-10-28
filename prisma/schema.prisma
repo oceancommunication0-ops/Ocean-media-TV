@@ -45,6 +45,13 @@ model ContentEntry {
   @@index([resource, categoryId, published])
   @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin, map: "ContentEntry_searchText_trgm_idx")
 }
+model MediaAsset {
+  id          String   @id @db.Uuid
+  data        Bytes
+  contentType String   @default("image/webp") @db.VarChar(100)
+  byteLength  Int
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+}
 model SiteSettings {
   id        String @id @default("main")
   data      Json
